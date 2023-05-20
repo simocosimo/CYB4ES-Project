@@ -21,11 +21,16 @@ app.use(session({
     secret: 'a secret sentence not to share with anybody and anywhere, used to sign the session ID cookie', resave: false, saveUninitialized: false
 }));
 
+//mando il DB completo.
+// GET /api/getDB
+app.get('/api/getDB', async (req, res) => {
+    dao.sendDB().then(rowsDB => res.json(rowsDB)).catch(() => res.status(500).json({ error: `Database error while retrieving rowsDB` }).end())
+});
 
 //aggiorno il check
 // PUT /api/updateCheck
 app.put('/api/updateCheck', async (req, res) => {
-    dao.updateCheck(req.body.HMAC,req.body.id).then(infoUser => res.json(infoUser)).catch(() => res.status(500).json({ error: `Database error while update check` }).end())
+    dao.updateCheck(req.body.hmac,req.body.id).then(infoUser => res.json(infoUser)).catch(() => res.status(500).json({ error: `Database error while update check` }).end())
 });
 
 //aggiorno lo stato
@@ -43,12 +48,12 @@ app.get('/api/msg_and_salt', async (req, res) => {
 //inserisco nel DB HMAC, msg e salt
 // POST /api/add_esements
 app.post('/api/add_elements', async (req, res) => {
-    let elem = req.body.elem;
+    let elem = req.body;
     dao.addElements(elem).then(elem => res.json(elem)).catch(() => res.status(500).json({ error: `Database error while retrieving elems` }).end())
 });
 
 // DELETE /api/delete/:userID
-app.delete('api/delete/:userID',async (req, res) => {
+app.delete('/api/delete/:userID',async (req, res) => {
     let userID = req.params.userID;
     try {
         await dao.deleteFromDB(userID);

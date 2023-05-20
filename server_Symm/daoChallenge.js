@@ -5,24 +5,37 @@ const db = new sqlite3.Database('Collections.db', (err) => {
     if (err) throw err;
 });
 
+exports.sendDB = () => {
+    return new Promise((resolve,reject) => {
+        const sql = 'SELECT * FROM Collection;';
+        db.all(sql,[],(err,rows)=> {
+            if(err){
+                reject(err);
+                return;
+            }
+            const my_info = rows.map((es) => ({ id:es.IDmsg, message: es.message, salt: es.salt, hmac: es.HMACmsg, check : es.checkMsg }));
+            //if (my_info.length>1)     qui estraevo solo la prima occorrenza
+                //resolve(my_info[0]);
+            resolve(my_info);
+        })
+    })
+}
 //setto il nuovo check verificando prima se l'hmac è uguale o meno.
 
 //update check in Collection
-exports.updateCheck = (HMAC,id) => {
+exports.updateCheck = (hmac,id) => {
     return new Promise((resolve, reject) => {
-        //console.log("hmac e id:"+HMAC+" "+id);
-        const sql = 'SELECT ID, HMAC FROM Collection WHERE ID = ? AND HMAC = ?;';
-        db.all(sql, [id,HMAC], (err, rows) => {
+        const sql = 'SELECT IDmsg, HMACmsg FROM Collection WHERE IDmsg = ? AND HMACmsg = ?;';
+        db.all(sql, [id,hmac], (err, rows) => {
             if (err) {
                 reject(err);
                 return;
             }
-            const my_info = rows.map((es) => ({ ID:es.ID, HMAC: es.HMAC }));
+            const my_info = rows.map((es) => ({ id:es.IDmsg, hmac: es.HMACmsg }));
             if (my_info.length>0){
-                //console.log(my_info);
-                if( my_info[0].HMAC == HMAC ) {
+                if( my_info[0].hmac == hmac ) {
                     const check = "ok";
-                    const sql2 = 'UPDATE Collection SET check=? WHERE ID = ?;';
+                    const sql2 = 'UPDATE Collection SET checkMsg=? WHERE IDmsg = ?;';
                     db.run(sql2, [check, id], function (err) {
                         if (err) {
                             reject(err);
@@ -57,15 +70,15 @@ exports.updateCheck = (HMAC,id) => {
 
 //get msg and salt
 exports.getMsg_and_salt = () => {
-    //const request_state = "verificare";
+    const request_state = "w4v";
     return new Promise((resolve, reject) => {
-        const sql = 'SELECT ID, message, salt FROM Collection WHERE check = w4v;';//w4v = wait for verify
-        db.all(sql, [], (err, rows) => {
+        const sql = 'SELECT IDmsg, message, salt FROM Collection WHERE checkMsg = ?;';//w4v = wait for verify
+        db.all(sql, [request_state], (err, rows) => {
             if (err) {
                 reject(err);
                 return;
             }
-            const my_info = rows.map((es) => ({ ID:es.ID, message: es.message, salt: es.salt }));
+            const my_info = rows.map((es) => ({ id:es.IDmsg, message: es.message, salt: es.salt }));
             //if (my_info.length>1)     qui estraevo solo la prima occorrenza
                 //resolve(my_info[0]);
             resolve(my_info);
@@ -77,8 +90,8 @@ exports.getMsg_and_salt = () => {
 exports.addElements = (elem) => {
     const check = "default";
     return new Promise((resolve, reject) => {
-        const sql2 = "INSERT INTO Collection (HMAC,message,salt,check) values(?,?,?,?);"
-        db.run(sql2, [elem.HMAC, elem.message, elem.salt, check], function (err) {
+        const sql2 = "INSERT INTO Collection (HMACmsg,message,salt,checkMsg) values(?,?,?,?);"
+        db.run(sql2, [elem.hmac, elem.message, elem.salt, check], function (err) {
             if (err) {
                 reject(err);
                 return;
@@ -91,7 +104,7 @@ exports.addElements = (elem) => {
 // delete row from DB
 exports.deleteFromDB = (userID) => {
     return new Promise((resolve, reject) => {
-        const sql = 'DELETE FROM Collection WHERE ID=?;';
+        const sql = 'DELETE FROM Collection WHERE IDmsg=?;';
         db.run(sql, [userID], (err) => {
             if (err) {
                 reject(err);
