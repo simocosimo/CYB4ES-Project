@@ -66,19 +66,19 @@ exports.updateCheck = (hmac,id) => {
 //     });
 // }
 
-//estraggo la riga di cui voglio verificare l'HMAC in base al messaggio ricevuto dall'app ritornando l'ID, il msg e il sale.
+//estraggo la riga di cui voglio verificare l'HMAC in base al messaggio ricevuto dall'app ritornando l'ID, l'hash del msg e il sale.
 
-//get msg and salt
+//get l'hash del msg, id and salt
 exports.getMsg_and_salt = () => {
     const request_state = "w4v";
     return new Promise((resolve, reject) => {
-        const sql = 'SELECT IDmsg, message, salt FROM Collection WHERE checkMsg = ?;';//w4v = wait for verify
+        const sql = 'SELECT IDmsg, hashMsg, salt FROM Collection WHERE checkMsg = ?;';//w4v = wait for verify
         db.all(sql, [request_state], (err, rows) => {
             if (err) {
                 reject(err);
                 return;
             }
-            const my_info = rows.map((es) => ({ id:es.IDmsg, message: es.message, salt: es.salt }));
+            const my_info = rows.map((es) => ({ id:es.IDmsg, hashMsg: es.hashMsg, salt: es.salt }));
             //if (my_info.length>1)     qui estraevo solo la prima occorrenza
                 //resolve(my_info[0]);
             resolve(my_info);
@@ -90,8 +90,8 @@ exports.getMsg_and_salt = () => {
 exports.addElements = (elem) => {
     const check = "default";
     return new Promise((resolve, reject) => {
-        const sql2 = "INSERT INTO Collection (HMACmsg,message,salt,checkMsg) values(?,?,?,?);"
-        db.run(sql2, [elem.hmac, elem.message, elem.salt, check], function (err) {
+        const sql2 = "INSERT INTO Collection (HMACmsg,hashMsg,message,salt,checkMsg) values(?,?,?,?,?);"
+        db.run(sql2, [elem.hmac,elem.hashMsg, elem.message, elem.salt, check], function (err) {
             if (err) {
                 reject(err);
                 return;

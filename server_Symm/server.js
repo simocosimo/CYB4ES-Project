@@ -39,13 +39,13 @@ app.put('/api/updateCheck', async (req, res) => {
 //     dao.updateState(req.body.id,req.body.request_state).then(infoUser => res.json(infoUser)).catch(() => res.status(500).json({ error: `Database error while update state` }).end())
 // });
 
-//mando all'app il messaggio, il sale e l'ID della riga per la verifica.
+//mando all'app l'hash del messaggio, il sale e l'ID della riga per la verifica.
 // GET /api/msg_and_salt
 app.get('/api/msg_and_salt', async (req, res) => {
     dao.getMsg_and_salt().then(msg_and_salt => res.json(msg_and_salt)).catch(() => res.status(500).json({ error: `Database error while retrieving msg_and_salt` }).end())
 });
 
-//inserisco nel DB HMAC, msg e salt
+//inserisco nel DB HMAC,hash del msg, msg e salt
 // POST /api/add_esements
 app.post('/api/add_elements', async (req, res) => {
     let elem = req.body;

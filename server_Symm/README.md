@@ -60,20 +60,18 @@ URL: `/api/msg_and_salt`
 
 Method: GET
 
-Description: Get the message and salt identified by the checkMsg `w4v`.
+Description: Get the IDmsg, hash message and salt identified by the checkMsg `w4v`.
 
 Request body: _None_
 
 Response: `200 OK` (success), `404 Not Found` (wrong code), or `500 Internal Server Error` (generic error).
 
-Response body: An object, describing a single message.
+Response body: An object or a vec of object, describing a single message or more then ones.
 ```
 {
-     { IDmsg: 2, 
-     HMACmsg: '028d5db0d685e2750a7f9370ff59a919d70a6bed', 
-     message: 'prova', 
+     IDmsg: 2, 
+     hashMsg: '6279886fde090b3038f267098bcca771a6efa946', 
      salt: '1111', 
-     checkMsg: 'w4v'
 }
 
 ```
@@ -88,7 +86,8 @@ Description: Add a new message to the list of the messages.
 
 Request body: An object representing a message (Content-Type: `application/json`).
 ```
-{    'hmac': '028d5db0d685e2750a7f9370ff59a919d70a6bed', 
+{    'hmac': '028d5db0d685e2750a7f9370ff59a919d70a6bed',
+     'hashMsg': '6279886fde090b3038f267098bcca771a6efa946',
      'message': 'prova', 
      'salt': '1111',
 }
