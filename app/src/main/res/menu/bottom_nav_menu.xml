@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/authmenu"
+        android:title="Authentication"
+        android:icon="@drawable/auth_key"
+        />
+    <item
+        android:id="@+id/verifmenu"
+        android:title="Verification"
+        android:icon="@drawable/verify"
+        />
+</menu>
