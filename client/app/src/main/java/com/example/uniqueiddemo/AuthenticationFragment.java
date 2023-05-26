@@ -7,6 +7,10 @@ import androidx.fragment.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
+import android.widget.Toast;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -23,6 +27,10 @@ public class AuthenticationFragment extends Fragment {
     // TODO: Rename and change types of parameters
     private String mParam1;
     private String mParam2;
+
+    private RadioGroup enc;
+    private RadioButton type;
+
 
     public AuthenticationFragment() {
         // Required empty public constructor
@@ -53,12 +61,28 @@ public class AuthenticationFragment extends Fragment {
             mParam1 = getArguments().getString(ARG_PARAM1);
             mParam2 = getArguments().getString(ARG_PARAM2);
         }
+
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_authentication, container, false);
+        View authView = inflater.inflate(R.layout.fragment_authentication, container, false);
+        Button auth = authView.findViewById(R.id.auth_button);
+        enc = authView.findViewById(R.id.radio_group);
+        enc.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(RadioGroup radioGroup, int i) {
+                Toast.makeText(authView.getContext(), "Encryption changed", Toast.LENGTH_SHORT).show();
+            }
+        });
+        auth.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(v.getContext(),"Authenticated",Toast.LENGTH_SHORT).show();
+            }
+        });
+        return authView;
     }
+
 }
