@@ -46,27 +46,8 @@ import okhttp3.Response;
  */
 public class AuthenticationFragment extends Fragment {
 
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
-    private static final UUID WIDEVINE_UUID = new UUID(-0x121074568629b532L, -0x5c37d8232ae2de13L);
-    final protected static char[] hexArray = "0123456789ABCDEF".toCharArray();
-
-
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
-
     private RadioGroup enc;
     private RadioButton type;
-    private EditText msg;
-    private EditText ip;
-    private OkHttpClient client;
-    private SecureRandom secureRandom;
-    private MediaDrm wvDrm;
-    private Gson gson;
-    private AddMessage addMessage;
     private Thread netThread;
 
     public AuthenticationFragment() {
@@ -85,8 +66,6 @@ public class AuthenticationFragment extends Fragment {
     public static AuthenticationFragment newInstance(String param1, String param2) {
         AuthenticationFragment fragment = new AuthenticationFragment();
         Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
         fragment.setArguments(args);
         return fragment;
     }
@@ -95,8 +74,7 @@ public class AuthenticationFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
+
         }
 
     }
@@ -107,17 +85,7 @@ public class AuthenticationFragment extends Fragment {
         View authView = inflater.inflate(R.layout.fragment_authentication, container, false);
         Button auth = authView.findViewById(R.id.auth_button);
         enc = authView.findViewById(R.id.radio_group);
-        msg = authView.findViewById(R.id.insert_message);
-        ip = authView.findViewById(R.id.insert_ip);
-        secureRandom = new SecureRandom();
-        gson = new Gson();
-        client = new OkHttpClient();
         type = authView.findViewById(R.id.radio_symm);
-        try {
-            wvDrm = new MediaDrm(WIDEVINE_UUID);
-        } catch (UnsupportedSchemeException e) {
-            throw new RuntimeException(e);
-        }
 
         enc.setOnCheckedChangeListener((radioGroup, i) -> {
 
@@ -134,71 +102,33 @@ public class AuthenticationFragment extends Fragment {
         auth.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                netThread = new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        String url = "http://" + ip.getText().toString() + ":3001/api/add_elements";
-                        MediaType JSON = MediaType.get("application/json; charset=utf-8");
-                        byte saltBytes[] = new byte[8];
-                        secureRandom.nextBytes(saltBytes);
-                        String salt = bytesToHex(saltBytes);
-                        int code = 0;
-                        if (type.getId() == R.id.radio_symm) {
-                            String hashable = msg.getText().toString() + salt;
-                            int nIteration = 1000;
-                            int keyLength = 256;
-                            String id = bytesToHex(wvDrm.getPropertyByteArray(MediaDrm.PROPERTY_DEVICE_UNIQUE_ID));
-                            PBEKeySpec pbKeySpec = new PBEKeySpec(id.toCharArray(), saltBytes, nIteration, keyLength);
-                            SecretKeyFactory secretKeyFactory;
-                            SecretKey keyBytes;
-                            String kDigest;
-                            byte[] digest;
-                            try {
-                                secretKeyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
-                                keyBytes = secretKeyFactory.generateSecret(pbKeySpec);
-                                Mac hmac = Mac.getInstance("HmacSHA1");
-                                MessageDigest md = MessageDigest.getInstance("SHA-384");
-                                digest = md.digest(hashable.getBytes());
-                                hmac.init(keyBytes);
-                                kDigest = bytesToHex(hmac.doFinal(digest));
-                            } catch (NoSuchAlgorithmException e) {
-                                throw new RuntimeException(e);
-                            } catch (InvalidKeySpecException e) {
-                                throw new RuntimeException(e);
-                            } catch (InvalidKeyException e) {
-                                throw new RuntimeException(e);
-                            }
-                            addMessage = new AddMessage(kDigest, bytesToHex(digest), msg.getText().toString(), salt);
-                            String requestBody = gson.toJson(addMessage);
-                            try {
-                                RequestBody body = RequestBody.create(requestBody, JSON);
-                                Request request = new Request.Builder()
-                                        .url(url)
-                                        .post(body)
-                                        .build();
-                                Response response = client.newCall(request).execute();
-                                code = response.code();
-                            } catch (IOException e) {
 
-                            }
+                if(type.getId() == R.id.radio_symm){
 
-                        }
+                    SymmAuthProcess symmAuthProcess = new SymmAuthProcess(authView);
+                    try {
+                        netThread = new Thread(symmAuthProcess);
+                        netThread.start();
+                        netThread.join();
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
                     }
-                });
-                netThread.start();
+                    int code= symmAuthProcess.getCode();
+                    if(code == 0){
+                        Toast.makeText(getContext(),"Please fill both input fields",Toast.LENGTH_SHORT).show();
+                    }
+                    if (code == 200){
+                        Toast.makeText(getContext(),"Message sent correctly",Toast.LENGTH_SHORT).show();
+                    }else {
+                        Toast.makeText(getContext(),"Somethig went wrong: error code " + code, Toast.LENGTH_SHORT).show();
+                    }
+                } else if (type.getId() == R.id.radio_asymm) {
+                    Toast.makeText(getContext(),"Not implemented", Toast.LENGTH_SHORT).show();
+                }
+
             }
         });
         return authView;
-    }
-
-    public static String bytesToHex(byte[] bytes) {
-        char[] hexChars = new char[bytes.length * 2];
-        for (int j = 0; j < bytes.length; j++) {
-            int v = bytes[j] & 0xFF;
-            hexChars[j * 2] = hexArray[v >>> 4];
-            hexChars[j * 2 + 1] = hexArray[v & 0x0F];
-        }
-        return new String(hexChars);
     }
 
 }
