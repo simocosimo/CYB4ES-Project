@@ -53,16 +53,6 @@ public class AuthenticationFragment extends Fragment {
     public AuthenticationFragment() {
         // Required empty public constructor
     }
-
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment AuthenticationFragment.
-     */
-    // TODO: Rename and change types and number of parameters
     public static AuthenticationFragment newInstance(String param1, String param2) {
         AuthenticationFragment fragment = new AuthenticationFragment();
         Bundle args = new Bundle();
