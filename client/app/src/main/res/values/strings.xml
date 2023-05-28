@@ -7,5 +7,6 @@
     <string name="symm_enc">Symmetric encription</string>
     <string name="asymm_enc">Asymmetric encription</string>
     <string name="insert_msg">Insert your message here</string>
-    <string name="start_auth">Authenticate</string>
+    <string name="start_auth">Send message</string>
+    <string name="insert_ip">Insert ip address</string>
 </resources>
