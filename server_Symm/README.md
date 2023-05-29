@@ -60,7 +60,7 @@ URL: `/api/msg_and_salt`
 
 Method: GET
 
-Description: Get the IDmsg, hash message and salt identified by the checkMsg `w4v`.
+Description: Get the IDmsg, message, hash message and salt identified by the checkMsg `w4v`.
 
 Request body: _None_
 
@@ -70,6 +70,7 @@ Response body: An object or a vec of object, describing a single message or more
 ```
 {
      IDmsg: 2, 
+     message: 'prova', 
      hashMsg: '6279886fde090b3038f267098bcca771a6efa946', 
      salt: '1111', 
 }

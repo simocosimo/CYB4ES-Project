@@ -66,19 +66,19 @@ exports.updateCheck = (hmac,id) => {
 //     });
 // }
 
-//estraggo la riga di cui voglio verificare l'HMAC in base al messaggio ricevuto dall'app ritornando l'ID, l'hash del msg e il sale.
+//estraggo la riga di cui voglio verificare l'HMAC in base al messaggio ricevuto dall'app ritornando l'ID,messaggio, l'hash del msg e il sale.
 
-//get l'hash del msg, id and salt
+//get msg, l'hash del msg, id and salt
 exports.getMsg_and_salt = () => {
     const request_state = "w4v";
     return new Promise((resolve, reject) => {
-        const sql = 'SELECT IDmsg, hashMsg, salt FROM Collection WHERE checkMsg = ?;';//w4v = wait for verify
+        const sql = 'SELECT IDmsg, message, hashMsg, salt FROM Collection WHERE checkMsg = ?;';//w4v = wait for verify
         db.all(sql, [request_state], (err, rows) => {
             if (err) {
                 reject(err);
                 return;
             }
-            const my_info = rows.map((es) => ({ id:es.IDmsg, hashMsg: es.hashMsg, salt: es.salt }));
+            const my_info = rows.map((es) => ({ id:es.IDmsg, message: es.message, hashMsg: es.hashMsg, salt: es.salt }));
             //if (my_info.length>1)     qui estraevo solo la prima occorrenza
                 //resolve(my_info[0]);
             resolve(my_info);
