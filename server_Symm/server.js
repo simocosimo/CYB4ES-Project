@@ -1,7 +1,7 @@
 'use strict';
 const express = require('express');
 const morgan = require('morgan'); // logging middleware
-const { check } = require('express-validator'); // validation middleware
+const { check, body } = require('express-validator'); // validation middleware
 const dao = require('./daoChallenge'); // module for accessing the DB
 const session = require('express-session'); // enable sessions
 const cors = require('cors');
@@ -29,8 +29,18 @@ app.get('/api/getDB', async (req, res) => {
 
 //aggiorno il check
 // PUT /api/updateCheck
-app.put('/api/updateCheck', async (req, res) => {
-    dao.updateCheck(req.body.hmac,req.body.id).then(infoUser => res.json(infoUser)).catch(() => res.status(500).json({ error: `Database error while update check` }).end())
+app.put('/api/updateCheck', async (req, res) => { 
+    const vettore = req.body.verify; //req.body ha il vettore di elem da verificare.
+    try {
+        const promiseMsg = [];
+        for (const elem of vettore) {
+            promiseMsg.push(dao.updateCheck(elem));
+        }
+        const results = await Promise.all(promiseMsg);
+        res.status(201).json(results).end();
+    } catch (err) {
+        res.status(503).json({ error: `Database error during the update check.` }).end();
+    }
 });
 
 //aggiorno lo stato

@@ -1,7 +1,5 @@
 # Track 9
 
-## Team name: Le Winx
-
 Team members:
 * s303333 COSIMO SIMONE
 * s305388 INNOCENZI DAVIDE 
@@ -41,12 +39,14 @@ Response body: An array of objects, each describing a message encrypt.
 [{
      { IDmsg: 1,
      HMACmsg: 'ae6bfa03e559aa6e70db7f884046928237e5504c', 
+     hashMsg: '839ebc986212f108e5af9b86bf863b8dcd05340c',
      message: 'ciao', 
      salt: '1234', 
      checkMsg: 'ok' },
 
 },   { IDmsg: 2, 
      HMACmsg: '028d5db0d685e2750a7f9370ff59a919d70a6bed', 
+     hashMsg: '484d4aa34be8df59475e226f991df5328c1f2d15',
      message: 'prova', 
      salt: '1111', 
      checkMsg: 'w4v'  },
@@ -104,18 +104,35 @@ URL: `/api/updateCheck`
 
 Method: PUT
 
-Description: Update an existing row, identified by its id and hmac.
+Description: Update existing rows, identified by its id and hmac.
 
-Request body: An object representing the entire message (Content-Type: `application/json`).
+Request body: An array of objects representing the entire message (Content-Type: `application/json`).
 ```
-{    'hmac': '028d5db0d685e2750a7f9370ff59a919d70a6bed', 
-     'id': 3,
+{
+     "verify":
+     [
+          {"hmac": "A3CD41B1B951CEA73F91E1F82BA9B2EC5B12A9A4", "id": 8},
+          {"hmac": "DF4F7999D681CB3E3C0F047EDFBD48049F517D6C", "id": 9},
+          {"hmac": "5d1ef41191903e02734a3e5e73b3650a9f03ef50", "id": 10},
+          {"hmac": "5718114dc87b1aa1be948683ff1b20425f743736", "id": 13},
+          ...
+     ]
 }
 ```
 
 Response: `200 OK` (success) or `503 Service Unavailable` (generic error). If the request body is not valid, `422 Unprocessable Entity` (validation error).
 
-Response body: _None_
+Response body: An array of objects representing the messages with check==ok (Content-Type: `application/json`).
+
+```
+[
+     {"id":8,"message":"ciao","check":"ok"},
+     {"id":9,"message":"ciao","check":"ok"},
+     {"id":10,"message":"ciao","check":"ok"},
+     {"id":13,"message":"prova prova","check":"ok"},
+     ...
+]
+```
 
 ### __Delete a Message__
 

@@ -13,7 +13,7 @@ exports.sendDB = () => {
                 reject(err);
                 return;
             }
-            const my_info = rows.map((es) => ({ id:es.IDmsg, message: es.message, salt: es.salt, hmac: es.HMACmsg, check : es.checkMsg }));
+            const my_info = rows.map((es) => ({ id:es.IDmsg, hashMsg:es.hashMsg, message: es.message, salt: es.salt, hmac: es.HMACmsg, check : es.checkMsg }));
             //if (my_info.length>1)     qui estraevo solo la prima occorrenza
                 //resolve(my_info[0]);
             resolve(my_info);
@@ -23,29 +23,36 @@ exports.sendDB = () => {
 //setto il nuovo check verificando prima se l'hmac è uguale o meno.
 
 //update check in Collection
-exports.updateCheck = (hmac,id) => {
+exports.updateCheck = (elem) => {
     return new Promise((resolve, reject) => {
         const sql = 'SELECT IDmsg, HMACmsg FROM Collection WHERE IDmsg = ? AND HMACmsg = ?;';
-        db.all(sql, [id,hmac], (err, rows) => {
+        db.all(sql, [elem.id,elem.hmac], (err, rows) => {
             if (err) {
                 reject(err);
                 return;
             }
             const my_info = rows.map((es) => ({ id:es.IDmsg, hmac: es.HMACmsg }));
             if (my_info.length>0){
-                if( my_info[0].hmac == hmac ) {
+                if( my_info[0].hmac == elem.hmac ) {
                     const check = "ok";
                     const sql2 = 'UPDATE Collection SET checkMsg=? WHERE IDmsg = ?;';
-                    db.run(sql2, [check, id], function (err) {
+                    db.run(sql2, [check, elem.id], function (err) {
                         if (err) {
                             reject(err);
                             return;
                         }
-                        resolve(my_info);
+                        const sql3 = 'SELECT IDmsg, message, checkMsg FROM Collection WHERE checkMsg = ? AND IDmsg= ?;';
+                        db.all(sql3, [check, elem.id], (err, rows) => {
+                            if (err) {
+                                reject(err);
+                                return;
+                            }
+                            const my_info2 = rows.map((es) => ({ id:es.IDmsg, message: es.message, check: es.checkMsg }));
+                            resolve(my_info2[0]);
+                        });
                     });
                 }
             }
-            resolve(my_info);
         });
     });
 }
