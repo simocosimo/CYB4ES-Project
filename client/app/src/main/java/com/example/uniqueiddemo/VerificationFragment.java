@@ -23,6 +23,8 @@ public class VerificationFragment extends Fragment {
     private Button verifyBtn;
     private RecyclerView msgList;
     private EditText ip;
+    private SymmVerifProcess symmVerifProcess;
+    int code;
     public VerificationFragment() {
         // Required empty public constructor
     }
@@ -53,7 +55,20 @@ public class VerificationFragment extends Fragment {
         verifyBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Toast.makeText(getContext(),"Done", Toast.LENGTH_SHORT).show();
+                try {
+                    symmVerifProcess = new SymmVerifProcess(verifView);
+                    netThread = new Thread(symmVerifProcess);
+                    netThread.start();
+                    netThread.join();
+                    code = symmVerifProcess.getCode();
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+                if (code == 0){
+                    Toast.makeText(getContext(),"Please fill the ip field" + code, Toast.LENGTH_SHORT).show();
+                }else {
+                    Toast.makeText(getContext(),"Done: " + code, Toast.LENGTH_SHORT).show();
+                }
             }
         });
         return verifView;
