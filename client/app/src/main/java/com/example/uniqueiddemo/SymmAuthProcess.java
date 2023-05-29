@@ -28,15 +28,15 @@ import okhttp3.Response;
 
 public class SymmAuthProcess implements Runnable{
 
-    final protected static char[] hexArray = "0123456789abcdef".toCharArray();
     private static final UUID WIDEVINE_UUID = new UUID(-0x121074568629b532L, -0x5c37d8232ae2de13L);
-    private TextView ip;
-    private TextView msg;
-    private SecureRandom secureRandom;
-    private Gson gson;
-    private OkHttpClient client;
+    private final TextView ip;
+    private final TextView msg;
+    private final SecureRandom secureRandom;
+    private final Gson gson;
+    private final OkHttpClient client;
     private MediaDrm wvDrm;
     private AddMessage addMessage;
+    private final ConversionUtil conversionUtil;
     private int code;
 
     public SymmAuthProcess(View authView){
@@ -45,6 +45,7 @@ public class SymmAuthProcess implements Runnable{
         secureRandom = new SecureRandom();
         gson = new Gson();
         client = new OkHttpClient();
+        conversionUtil = new ConversionUtil();
     }
 
     public void run() {
@@ -57,7 +58,7 @@ public class SymmAuthProcess implements Runnable{
         MediaType JSON = MediaType.get("application/json; charset=utf-8");
         byte[] saltBytes = new byte[8];
         secureRandom.nextBytes(saltBytes);
-        String salt = bytesToHex(saltBytes);
+        String salt = conversionUtil.bytesToHex(saltBytes);
         String hashable = msg.getText().toString() + salt;
         int nIteration = 1000;
         int keyLength = 256;
@@ -69,25 +70,25 @@ public class SymmAuthProcess implements Runnable{
         }
 
 
-        String id = bytesToHex(wvDrm.getPropertyByteArray(MediaDrm.PROPERTY_DEVICE_UNIQUE_ID));
+        String id = conversionUtil.bytesToHex(wvDrm.getPropertyByteArray(MediaDrm.PROPERTY_DEVICE_UNIQUE_ID));
         PBEKeySpec pbKeySpec = new PBEKeySpec(id.toCharArray(), saltBytes, nIteration, keyLength);
         SecretKeyFactory secretKeyFactory;
         SecretKey keyBytes;
         String kDigest;
         byte[] digest;
         try {
-            secretKeyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
+            secretKeyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA384");
             keyBytes = secretKeyFactory.generateSecret(pbKeySpec);
-            Mac hmac = Mac.getInstance("HmacSHA1");
+            Mac hmac = Mac.getInstance("HmacSHA384");
             MessageDigest md = MessageDigest.getInstance("SHA-384");
             digest = md.digest(hashable.getBytes());
             hmac.init(keyBytes);
-            kDigest = bytesToHex(hmac.doFinal(digest));
+            kDigest = conversionUtil.bytesToHex(hmac.doFinal(digest));
         } catch (NoSuchAlgorithmException | InvalidKeySpecException |
                  InvalidKeyException e) {
             throw new RuntimeException(e);
         }
-        addMessage = new AddMessage(kDigest, bytesToHex(digest), msg.getText().toString(), salt);
+        addMessage = new AddMessage(kDigest, conversionUtil.bytesToHex(digest), msg.getText().toString(), salt);
         String requestBody = gson.toJson(addMessage);
         try {
             RequestBody body = RequestBody.create(requestBody, JSON);
@@ -98,7 +99,7 @@ public class SymmAuthProcess implements Runnable{
             Response response = client.newCall(request).execute();
             code = response.code();
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            code = 0;
         }
     }
 
@@ -106,36 +107,5 @@ public class SymmAuthProcess implements Runnable{
         return code;
     }
 
-    public static String bytesToHex(byte[] bytes) {
-        char[] hexChars = new char[bytes.length * 2];
-        for (int j = 0; j < bytes.length; j++) {
-            int v = bytes[j] & 0xFF;
-            hexChars[j * 2] = hexArray[v >>> 4];
-            hexChars[j * 2 + 1] = hexArray[v & 0x0F];
-        }
-        return new String(hexChars);
-    }
 
-    public static byte[] hexStringToByteArray(String s) {
-        try {
-
-            int len = s.length();
-            if(len>1) {
-                byte[] data = new byte[len / 2];
-                for (int i = 0 ; i < len ; i += 2) {
-                    data[i / 2] = (byte) ((Character.digit(s.charAt(i), 16) << 4)
-                            + Character.digit(s.charAt(i + 1), 16));
-                }
-                return data;
-            }
-            else
-
-            {
-                return  null;
-            }
-        }catch (Exception e)
-        {
-            throw e;
-        }
-    }
 }

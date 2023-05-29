@@ -64,9 +64,11 @@ public class VerificationFragment extends Fragment {
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 }
-                if (code == 0){
+                if (code == 0 ){
                     Toast.makeText(getContext(),"Please fill the ip field" + code, Toast.LENGTH_SHORT).show();
-                }else {
+                }else if(code == 1) {
+                    Toast.makeText(getContext(),"No message to verify", Toast.LENGTH_SHORT).show();
+                }else{
                     Toast.makeText(getContext(),"Done: " + code, Toast.LENGTH_SHORT).show();
                 }
             }
