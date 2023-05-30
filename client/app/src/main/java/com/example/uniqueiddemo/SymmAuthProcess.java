@@ -1,7 +1,10 @@
 package com.example.uniqueiddemo;
 
+import static com.example.uniqueiddemo.MainActivity.iccid;
+
 import android.media.MediaDrm;
 import android.media.UnsupportedSchemeException;
+import android.os.Build;
 import android.view.View;
 import android.widget.TextView;
 
@@ -36,7 +39,6 @@ public class SymmAuthProcess implements Runnable{
     private final OkHttpClient client;
     private MediaDrm wvDrm;
     private AddMessage addMessage;
-    private final ConversionUtil conversionUtil;
     private int code;
 
     public SymmAuthProcess(View authView){
@@ -45,7 +47,6 @@ public class SymmAuthProcess implements Runnable{
         secureRandom = new SecureRandom();
         gson = new Gson();
         client = new OkHttpClient();
-        conversionUtil = new ConversionUtil();
     }
 
     public void run() {
@@ -58,7 +59,7 @@ public class SymmAuthProcess implements Runnable{
         MediaType JSON = MediaType.get("application/json; charset=utf-8");
         byte[] saltBytes = new byte[8];
         secureRandom.nextBytes(saltBytes);
-        String salt = conversionUtil.bytesToHex(saltBytes);
+        String salt = ConversionUtil.bytesToHex(saltBytes);
         String hashable = msg.getText().toString() + salt;
         int nIteration = 1000;
         int keyLength = 256;
@@ -69,8 +70,11 @@ public class SymmAuthProcess implements Runnable{
             throw new RuntimeException(e);
         }
 
+        String id = ConversionUtil.bytesToHex(wvDrm.getPropertyByteArray(MediaDrm.PROPERTY_DEVICE_UNIQUE_ID));
 
-        String id = conversionUtil.bytesToHex(wvDrm.getPropertyByteArray(MediaDrm.PROPERTY_DEVICE_UNIQUE_ID));
+        if(Build.VERSION.SDK_INT <= 30 ){
+            id = id.concat(iccid);
+        }
         PBEKeySpec pbKeySpec = new PBEKeySpec(id.toCharArray(), saltBytes, nIteration, keyLength);
         SecretKeyFactory secretKeyFactory;
         SecretKey keyBytes;
@@ -83,12 +87,12 @@ public class SymmAuthProcess implements Runnable{
             MessageDigest md = MessageDigest.getInstance("SHA-384");
             digest = md.digest(hashable.getBytes());
             hmac.init(keyBytes);
-            kDigest = conversionUtil.bytesToHex(hmac.doFinal(digest));
+            kDigest = ConversionUtil.bytesToHex(hmac.doFinal(digest));
         } catch (NoSuchAlgorithmException | InvalidKeySpecException |
                  InvalidKeyException e) {
             throw new RuntimeException(e);
         }
-        addMessage = new AddMessage(kDigest, conversionUtil.bytesToHex(digest), msg.getText().toString(), salt);
+        addMessage = new AddMessage(kDigest, ConversionUtil.bytesToHex(digest), msg.getText().toString(), salt);
         String requestBody = gson.toJson(addMessage);
         try {
             RequestBody body = RequestBody.create(requestBody, JSON);

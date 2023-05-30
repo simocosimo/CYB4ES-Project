@@ -1,6 +1,9 @@
 package com.example.uniqueiddemo;
 
+import static com.example.uniqueiddemo.MainActivity.iccid;
+
 import android.media.MediaDrm;
+import android.os.Build;
 import android.view.View;
 
 import android.widget.EditText;
@@ -36,14 +39,16 @@ public class SymmVerifProcess implements Runnable{
     private final OkHttpClient client;
     private final Gson gson;
     private ArrayList<VerifyMessage> messageList;
-    private ArrayList<ServerCheck> sendMessage;
+    private ArrayList<ServerCheck> verify;
+    private ArrayList<VerifiedMessage> verified;
     private MediaDrm wvDrm;
     String kDigest;
     public SymmVerifProcess(View verifyView){
         ip = verifyView.findViewById(R.id.ip_addr_verif);
         client = new OkHttpClient();
         gson = new Gson();
-        sendMessage = new ArrayList<ServerCheck>();
+        verify = new ArrayList<>();
+        verified = new ArrayList<>();
     }
 
     @Override
@@ -63,14 +68,12 @@ public class SymmVerifProcess implements Runnable{
                     .build();
             Response response = client.newCall(request).execute();
             Type messageListType = new TypeToken<ArrayList<VerifyMessage>>() {}.getType();
-            if(response.body() != null){
-                messageList = gson.fromJson(response.body().charStream(),messageListType);
-            }else{
-                code = 1;
-                return;
-            }
+            messageList = gson.fromJson(response.body().string(),messageListType);
             wvDrm = new MediaDrm(WIDEVINE_UUID);
             String id = ConversionUtil.bytesToHex(wvDrm.getPropertyByteArray(MediaDrm.PROPERTY_DEVICE_UNIQUE_ID));
+            if(Build.VERSION.SDK_INT <= 30 ){
+                id = id.concat(iccid);
+            }
             int nIteration = 1000;
             int keyLength = 256;
             for (VerifyMessage message : messageList){
@@ -83,7 +86,7 @@ public class SymmVerifProcess implements Runnable{
                 Mac hmac = Mac.getInstance("HmacSHA384");
                 hmac.init(keyBytes);
                 kDigest = ConversionUtil.bytesToHex(hmac.doFinal(ConversionUtil.hexStringToByteArray(message.getHashMsg())));
-                sendMessage.add(new ServerCheck(kDigest,message.getIDmsg()));
+                verify.add(new ServerCheck(kDigest,message.getIDmsg()));
 
             }
 
@@ -91,7 +94,8 @@ public class SymmVerifProcess implements Runnable{
             throw new RuntimeException(e);
         }
 
-        String requestBody = gson.toJson(sendMessage);
+        String requestBody = gson.toJson(verify);
+        requestBody = "{\"verify\" : " + requestBody + "}";
 
         url = "http://" + ip.getText().toString() + ":3001/api/updateCheck";
         RequestBody body = RequestBody.create(requestBody,JSON);
@@ -103,6 +107,8 @@ public class SymmVerifProcess implements Runnable{
                     .build();
             response = client.newCall(request).execute();
             code = response.code();
+            Type verifiedType = new TypeToken<ArrayList<VerifiedMessage>>() {}.getType();
+            verified = gson.fromJson(response.body().string(),verifiedType);
         }
         catch (IOException e) {
             code = 0;
@@ -111,6 +117,9 @@ public class SymmVerifProcess implements Runnable{
     }
     public int getCode(){
         return code;
+    }
+    public ArrayList<VerifiedMessage> getVerified(){
+        return verified;
     }
 
 }

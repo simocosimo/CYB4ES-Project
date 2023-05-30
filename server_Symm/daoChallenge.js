@@ -41,13 +41,13 @@ exports.updateCheck = (elem) => {
                             reject(err);
                             return;
                         }
-                        const sql3 = 'SELECT IDmsg, message, checkMsg FROM Collection WHERE checkMsg = ? AND IDmsg= ?;';
+                        const sql3 = 'SELECT IDmsg, message, hashMsg FROM Collection WHERE checkMsg = ? AND IDmsg= ?;';
                         db.all(sql3, [check, elem.id], (err, rows) => {
                             if (err) {
                                 reject(err);
                                 return;
                             }
-                            const my_info2 = rows.map((es) => ({ id:es.IDmsg, message: es.message, check: es.checkMsg }));
+                            const my_info2 = rows.map((es) => ({ id:es.IDmsg, message: es.message, hash: es.hashMsg }));
                             resolve(my_info2[0]);
                         });
                     });

@@ -3,6 +3,7 @@ package com.example.uniqueiddemo;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.view.LayoutInflater;
@@ -11,6 +12,8 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
+
+import java.util.ArrayList;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -22,8 +25,8 @@ public class VerificationFragment extends Fragment {
     private Thread netThread;
     private Button verifyBtn;
     private RecyclerView msgList;
-    private EditText ip;
     private SymmVerifProcess symmVerifProcess;
+    private ArrayList<VerifiedMessage> verified;
     int code;
     public VerificationFragment() {
         // Required empty public constructor
@@ -49,9 +52,7 @@ public class VerificationFragment extends Fragment {
         // Inflate the layout for this fragment
         View verifView = inflater.inflate(R.layout.fragment_verification, container, false);
         verifyBtn = verifView.findViewById(R.id.verify_btn);
-        ip = verifView.findViewById(R.id.ip_addr_verif);
         msgList = verifView.findViewById(R.id.message_list);
-
         verifyBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -61,16 +62,20 @@ public class VerificationFragment extends Fragment {
                     netThread.start();
                     netThread.join();
                     code = symmVerifProcess.getCode();
+                    verified = symmVerifProcess.getVerified();
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 }
                 if (code == 0 ){
                     Toast.makeText(getContext(),"Please fill the ip field" + code, Toast.LENGTH_SHORT).show();
-                }else if(code == 1) {
-                    Toast.makeText(getContext(),"No message to verify", Toast.LENGTH_SHORT).show();
                 }else{
                     Toast.makeText(getContext(),"Done: " + code, Toast.LENGTH_SHORT).show();
                 }
+
+                RecyclerViewAdapter adapter = new RecyclerViewAdapter(getContext(),verified);
+                msgList.setAdapter(adapter);
+                msgList.setLayoutManager(new LinearLayoutManager(getContext()));
+
             }
         });
         return verifView;
