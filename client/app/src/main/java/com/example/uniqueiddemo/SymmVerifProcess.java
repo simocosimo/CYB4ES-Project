@@ -7,6 +7,7 @@ import android.os.Build;
 import android.view.View;
 
 import android.widget.EditText;
+import android.widget.Toast;
 
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -34,7 +35,6 @@ import okhttp3.Response;
 public class SymmVerifProcess implements Runnable{
     private static final UUID WIDEVINE_UUID = new UUID(-0x121074568629b532L, -0x5c37d8232ae2de13L);
     private int code;
-    private RecyclerView msgList;
     private final EditText ip;
     private final OkHttpClient client;
     private final Gson gson;
@@ -94,15 +94,15 @@ public class SymmVerifProcess implements Runnable{
             throw new RuntimeException(e);
         }
 
-        String requestBody = gson.toJson(verify);
-        requestBody = "{\"verify\" : " + requestBody + "}";
+        VerifyArray verifyArray = new VerifyArray(verify);
+        String requestBody = gson.toJson(verifyArray);
 
-        url = "http://" + ip.getText().toString() + ":3001/api/updateCheck";
+        String url1 = "http://" + ip.getText().toString() + ":3001/api/updateCheck";
         RequestBody body = RequestBody.create(requestBody,JSON);
         Response response;
         try{
             Request request = new Request.Builder()
-                    .url(url)
+                    .url(url1)
                     .put(body)
                     .build();
             response = client.newCall(request).execute();
@@ -111,7 +111,7 @@ public class SymmVerifProcess implements Runnable{
             verified = gson.fromJson(response.body().string(),verifiedType);
         }
         catch (IOException e) {
-            code = 0;
+            code = 100;
             throw new RuntimeException(e);
         }
     }
@@ -120,6 +120,14 @@ public class SymmVerifProcess implements Runnable{
     }
     public ArrayList<VerifiedMessage> getVerified(){
         return verified;
+    }
+
+    private class VerifyArray{
+        private ArrayList<ServerCheck> verify;
+
+        public VerifyArray(ArrayList<ServerCheck> verify) {
+            this.verify = verify;
+        }
     }
 
 }

@@ -37,7 +37,8 @@ app.put('/api/updateCheck', async (req, res) => {
             promiseMsg.push(dao.updateCheck(elem));
         }
         const results = await Promise.all(promiseMsg);
-        res.status(201).json(results).end();
+        const vett2 = results.filter((elem) => elem.id > 0);
+        res.status(201).json(vett2).end();
     } catch (err) {
         res.status(503).json({ error: `Database error during the update check.` }).end();
     }

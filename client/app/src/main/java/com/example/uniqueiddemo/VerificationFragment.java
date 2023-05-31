@@ -66,10 +66,13 @@ public class VerificationFragment extends Fragment {
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 }
+                if (code == 100){
+                    Toast.makeText(getContext(),"Timeout", Toast.LENGTH_SHORT).show();
+                }
                 if (code == 0 ){
                     Toast.makeText(getContext(),"Please fill the ip field" + code, Toast.LENGTH_SHORT).show();
-                }else{
-                    Toast.makeText(getContext(),"Done: " + code, Toast.LENGTH_SHORT).show();
+                }else if (code == 201){
+                    Toast.makeText(getContext(),"Done", Toast.LENGTH_SHORT).show();
                 }
 
                 RecyclerViewAdapter adapter = new RecyclerViewAdapter(getContext(),verified);

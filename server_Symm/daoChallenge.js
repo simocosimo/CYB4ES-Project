@@ -23,17 +23,71 @@ exports.sendDB = () => {
 //setto il nuovo check verificando prima se l'hmac è uguale o meno.
 
 //update check in Collection
+// exports.updateCheck = (elem) => {
+//     const check = "ok";
+//     return new Promise((resolve, reject) => {
+//         const sql = 'SELECT IDmsg, HMACmsg FROM Collection WHERE IDmsg = ? AND HMACmsg = ?;';
+//         db.all(sql, [elem.id,elem.hmac], (err, rows) => {
+//             if (err) {
+//                 reject(err);
+//                 return;
+//             }
+//             let my_info2={};
+//             const my_info = rows.map((es) => ({ id:es.IDmsg, hmac: es.HMACmsg }));
+//             if (my_info.length>0){
+//                 if( my_info[0].hmac == elem.hmac ) {
+                    
+//                     const sql2 = 'UPDATE Collection SET checkMsg=? WHERE IDmsg = ?;';
+//                     db.run(sql2, [check, elem.id], function (err) {
+//                         if (err) {
+//                             reject(err);
+//                             return;
+//                         }
+//                         console.log("db all");
+//                         const sql3 = 'SELECT IDmsg, message, hashMsg FROM Collection WHERE checkMsg = ? AND IDmsg= ?;';
+//                         db.all(sql3, [check, elem.id], (err, rows) => {
+//                             if (err) {
+//                                 reject(err);
+//                                 return;
+//                             }
+//                             my_info2 = rows.map((es) => ({ id:es.IDmsg, message: es.message, hash: es.hashMsg }));
+//                             resolve(my_info2[0]);
+//                         });
+//                     });
+//                 }
+//             }
+//             // console.log(my_info2[0].id);
+//             // resolve(my_info2);
+//             // const sql3 = 'SELECT IDmsg, message, hashMsg FROM Collection WHERE checkMsg = ? AND IDmsg= ?;';
+//             //             db.all(sql3, [check, elem.id], (err, rows) => {
+//             //                 if (err) {
+//             //                     reject(err);
+//             //                     return;
+//             //                 }
+//             //                 my_info2 = rows.map((es) => ({ id:es.IDmsg, message: es.message, hash: es.hashMsg }));
+//             //                 resolve(my_info2[0]);
+//             //             });
+//         });
+//     });
+// }
+
 exports.updateCheck = (elem) => {
     return new Promise((resolve, reject) => {
-        const sql = 'SELECT IDmsg, HMACmsg FROM Collection WHERE IDmsg = ? AND HMACmsg = ?;';
-        db.all(sql, [elem.id,elem.hmac], (err, rows) => {
-            if (err) {
-                reject(err);
-                return;
-            }
-            const my_info = rows.map((es) => ({ id:es.IDmsg, hmac: es.HMACmsg }));
-            if (my_info.length>0){
-                if( my_info[0].hmac == elem.hmac ) {
+        const firstFunction = () => {
+            const sql = 'SELECT IDmsg, HMACmsg FROM Collection WHERE IDmsg = ? AND HMACmsg = ?;';
+            db.all(sql, [elem.id, elem.hmac], (err, rows) => {
+                if (err) {
+                    reject(err);
+                    return;
+                }
+                const my_info = rows.map((es) => ({ id: es.IDmsg, hmac: es.HMACmsg }));
+                secondFunction(my_info,elem);
+            });
+        };
+
+        const secondFunction = (my_info,elem) => {
+            if (my_info.length > 0) {
+                if (my_info[0].hmac === elem.hmac) {
                     const check = "ok";
                     const sql2 = 'UPDATE Collection SET checkMsg=? WHERE IDmsg = ?;';
                     db.run(sql2, [check, elem.id], function (err) {
@@ -41,37 +95,32 @@ exports.updateCheck = (elem) => {
                             reject(err);
                             return;
                         }
-                        const sql3 = 'SELECT IDmsg, message, hashMsg FROM Collection WHERE checkMsg = ? AND IDmsg= ?;';
-                        db.all(sql3, [check, elem.id], (err, rows) => {
-                            if (err) {
-                                reject(err);
-                                return;
-                            }
-                            const my_info2 = rows.map((es) => ({ id:es.IDmsg, message: es.message, hash: es.hashMsg }));
-                            resolve(my_info2[0]);
-                        });
+                        thirdFunction(elem);
                     });
                 }
+             } else {
+                resolve({id : -1});
             }
-        });
+        };
+
+        const thirdFunction = (elem) => {
+            const check = "ok";
+            const sql3 = 'SELECT IDmsg, message, hashMsg FROM Collection WHERE checkMsg = ? AND IDmsg= ?;';
+            db.all(sql3, [check, elem.id], (err, rows) => {
+                if (err) {
+                    reject(err);
+                    return;
+                }
+                const my_info2 = rows.map((es) => ({ id: es.IDmsg, message: es.message, hash: es.hashMsg }));
+                resolve(my_info2[0]);
+            });
+        };
+
+        firstFunction();
     });
-}
+};
 
 //questo aggiornamento è fatto tramite interfaccia del server. Posso settarlo a "verificare" per abilitare la verifica mandando msg e salt al client e ricalcolando HMAC. "idle" per tenerla in sospeso. "ok" se verificata.
-
-//update state in Collection
-// exports.updateState = (id, request_state) => {
-//     return new Promise((resolve, reject) => {
-//         const sql = 'UPDATE Collection SET state = ? WHERE ID = ?;';
-//         db.run(sql, [request_state, id], function (err) {
-//             if (err) {
-//                 reject(err);
-//                 return;
-//             }
-//             resolve(this.lastID);
-//         });
-//     });
-// }
 
 //estraggo la riga di cui voglio verificare l'HMAC in base al messaggio ricevuto dall'app ritornando l'ID,messaggio, l'hash del msg e il sale.
 
