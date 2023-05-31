@@ -11,12 +11,14 @@ import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.telecom.PhoneAccountHandle;
 import android.telecom.TelecomManager;
+import android.widget.Toast;
 
 import com.example.uniqueiddemo.databinding.ActivityMainBinding;
 
@@ -38,20 +40,20 @@ public class MainActivity extends AppCompatActivity {
             ActivityCompat.requestPermissions(this,
                     new String[]{Manifest.permission.READ_PHONE_STATE},
                     PERMISSIONS_REQUEST_READ_PHONE_STATE);
-        }else if(Build.VERSION.SDK_INT <= 30){
-            TelecomManager tm2 = (TelecomManager)getSystemService(Context.TELECOM_SERVICE);
+        } else if (Build.VERSION.SDK_INT <= 30) {
+            TelecomManager tm2 = (TelecomManager) getSystemService(Context.TELECOM_SERVICE);
             Iterator<PhoneAccountHandle> phoneAccounts = tm2.getCallCapablePhoneAccounts().listIterator();
             PhoneAccountHandle phoneAccountHandle = phoneAccounts.next();
-            iccid = phoneAccountHandle.getId().substring(0,19);
+            iccid = phoneAccountHandle.getId().substring(0, 19);
         }
-        
+
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
         replaceFragment(new AuthenticationFragment());
 
         binding.bottomNavigationView.setOnItemSelectedListener(item -> {
 
-            if(item.getItemId() == R.id.authmenu){
+            if (item.getItemId() == R.id.authmenu) {
                 replaceFragment(new AuthenticationFragment());
                 return true;
             } else if (item.getItemId() == R.id.verifmenu) {
@@ -61,6 +63,32 @@ public class MainActivity extends AppCompatActivity {
 
             return false;
         });
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String permissions[], int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        switch (requestCode) {
+            case PERMISSIONS_REQUEST_READ_PHONE_STATE: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+                    Toast.makeText(getApplicationContext(), "Permission granted", Toast.LENGTH_SHORT).show();
+                    TelecomManager tm2 = (TelecomManager) getSystemService(Context.TELECOM_SERVICE);
+                    @SuppressLint("MissingPermission")
+                    Iterator<PhoneAccountHandle> phoneAccounts = tm2.getCallCapablePhoneAccounts().listIterator();
+                    PhoneAccountHandle phoneAccountHandle = phoneAccounts.next();
+                    iccid = phoneAccountHandle.getId().substring(0,19);
+
+                } else {
+                    Toast.makeText(getApplicationContext(), "Permission denied: please grant phone permissions", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            // other 'case' lines to check for other
+            // permissions this app might request
+        }
     }
 
     private void replaceFragment(Fragment fragment){
