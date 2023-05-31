@@ -20,57 +20,10 @@ exports.sendDB = () => {
         })
     })
 }
+
 //setto il nuovo check verificando prima se l'hmac è uguale o meno.
 
 //update check in Collection
-// exports.updateCheck = (elem) => {
-//     const check = "ok";
-//     return new Promise((resolve, reject) => {
-//         const sql = 'SELECT IDmsg, HMACmsg FROM Collection WHERE IDmsg = ? AND HMACmsg = ?;';
-//         db.all(sql, [elem.id,elem.hmac], (err, rows) => {
-//             if (err) {
-//                 reject(err);
-//                 return;
-//             }
-//             let my_info2={};
-//             const my_info = rows.map((es) => ({ id:es.IDmsg, hmac: es.HMACmsg }));
-//             if (my_info.length>0){
-//                 if( my_info[0].hmac == elem.hmac ) {
-                    
-//                     const sql2 = 'UPDATE Collection SET checkMsg=? WHERE IDmsg = ?;';
-//                     db.run(sql2, [check, elem.id], function (err) {
-//                         if (err) {
-//                             reject(err);
-//                             return;
-//                         }
-//                         console.log("db all");
-//                         const sql3 = 'SELECT IDmsg, message, hashMsg FROM Collection WHERE checkMsg = ? AND IDmsg= ?;';
-//                         db.all(sql3, [check, elem.id], (err, rows) => {
-//                             if (err) {
-//                                 reject(err);
-//                                 return;
-//                             }
-//                             my_info2 = rows.map((es) => ({ id:es.IDmsg, message: es.message, hash: es.hashMsg }));
-//                             resolve(my_info2[0]);
-//                         });
-//                     });
-//                 }
-//             }
-//             // console.log(my_info2[0].id);
-//             // resolve(my_info2);
-//             // const sql3 = 'SELECT IDmsg, message, hashMsg FROM Collection WHERE checkMsg = ? AND IDmsg= ?;';
-//             //             db.all(sql3, [check, elem.id], (err, rows) => {
-//             //                 if (err) {
-//             //                     reject(err);
-//             //                     return;
-//             //                 }
-//             //                 my_info2 = rows.map((es) => ({ id:es.IDmsg, message: es.message, hash: es.hashMsg }));
-//             //                 resolve(my_info2[0]);
-//             //             });
-//         });
-//     });
-// }
-
 exports.updateCheck = (elem) => {
     return new Promise((resolve, reject) => {
         const firstFunction = () => {
