@@ -126,10 +126,10 @@ Response body: An array of objects representing the messages with check==ok (Con
 
 ```
 [
-     {"id":8,"message":"ciao","check":"ok"},
-     {"id":9,"message":"ciao","check":"ok"},
-     {"id":10,"message":"ciao","check":"ok"},
-     {"id":13,"message":"prova prova","check":"ok"},
+     {"id":8,"message":"ciao","hash":"A3CD41B1B951CEA73F91E1F82BA9B2EC5B12A9A4"},
+     {"id":9,"message":"ciao","hash":"A3CD41B1B951CEA73F91E1F82BA9B2EC5B12A9A4"},
+     {"id":10,"message":"ciao","hash":"A3CD41B1B951CEA73F91E1F82BA9B2EC5B12A9A4"},
+     {"id":13,"message":"prova prova","hash":"A3CD41B1B951CEA73F91E1F82BA9B2EC5B12A9A4"},
      ...
 ]
 ```
