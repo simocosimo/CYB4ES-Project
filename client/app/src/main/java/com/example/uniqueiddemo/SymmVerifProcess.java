@@ -70,14 +70,18 @@ public class SymmVerifProcess implements Runnable{
             Type messageListType = new TypeToken<ArrayList<VerifyMessage>>() {}.getType();
             messageList = gson.fromJson(response.body().string(),messageListType);
             wvDrm = new MediaDrm(WIDEVINE_UUID);
-            String id = ConversionUtil.bytesToHex(wvDrm.getPropertyByteArray(MediaDrm.PROPERTY_DEVICE_UNIQUE_ID));
-            if(Build.VERSION.SDK_INT <= 30 ){
-                id = id.concat(iccid);
-            }
+            String drm = ConversionUtil.bytesToHex(wvDrm.getPropertyByteArray(MediaDrm.PROPERTY_DEVICE_UNIQUE_ID));
             int nIteration = 1000;
             int keyLength = 256;
-            for (VerifyMessage message : messageList){
 
+
+            for (VerifyMessage message : messageList){
+                String id;
+                if(Build.VERSION.SDK_INT <= 30 && message.getICCID() != null){
+                    id = drm.concat(iccid);
+                }else {
+                    id = drm;
+                }
                 PBEKeySpec pbKeySpec = new PBEKeySpec(id.toCharArray(), ConversionUtil.hexStringToByteArray(message.getSalt()), nIteration, keyLength);
                 SecretKeyFactory secretKeyFactory;
                 SecretKey keyBytes;

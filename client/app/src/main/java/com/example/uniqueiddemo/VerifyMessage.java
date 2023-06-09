@@ -5,11 +5,15 @@ public class VerifyMessage {
     private String id;
     private String hashMsg;
     private String salt;
+    private String DRM;
+    private String ICCID;
 
-    public VerifyMessage(String id, String hashMsg, String salt) {
+    public VerifyMessage(String id, String hashMsg, String salt, String DRM, String ICCID) {
         this.id = id;
         this.hashMsg = hashMsg;
         this.salt = salt;
+        this.DRM = DRM;
+        this.ICCID = ICCID;
     }
 
     public int getIDmsg() {
@@ -22,5 +26,9 @@ public class VerifyMessage {
 
     public String getSalt() {
         return salt;
+    }
+
+    public String getICCID() {
+        return ICCID;
     }
 }

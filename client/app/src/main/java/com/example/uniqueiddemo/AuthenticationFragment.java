@@ -1,6 +1,7 @@
 package com.example.uniqueiddemo;
 
 import android.media.UnsupportedSchemeException;
+import android.os.Build;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
@@ -14,6 +15,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
+import android.widget.Switch;
 import android.widget.Toast;
 
 import com.google.gson.Gson;
@@ -49,6 +51,7 @@ public class AuthenticationFragment extends Fragment {
     private RadioGroup enc;
     private RadioButton type;
     private Thread netThread;
+    private Switch useIccid;
 
     public AuthenticationFragment() {
         // Required empty public constructor
@@ -76,7 +79,12 @@ public class AuthenticationFragment extends Fragment {
         Button auth = authView.findViewById(R.id.auth_button);
         enc = authView.findViewById(R.id.radio_group);
         type = authView.findViewById(R.id.radio_symm);
-
+        useIccid = authView.findViewById(R.id.use_iccid);
+        if (Build.VERSION.SDK_INT > 30){
+            useIccid.setVisibility(View.INVISIBLE);
+        } else {
+            useIccid.setChecked(false);
+        }
         enc.setOnCheckedChangeListener((radioGroup, i) -> {
 
             if (i == R.id.radio_symm){

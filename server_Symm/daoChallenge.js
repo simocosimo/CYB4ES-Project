@@ -81,7 +81,7 @@ exports.updateCheck = (elem) => {
 exports.getMsg_and_salt = () => {
     const request_state = "w4v";
     return new Promise((resolve, reject) => {
-        const sql = 'SELECT IDmsg, message, hashMsg, salt FROM Collection WHERE checkMsg = ?;';//w4v = wait for verify
+        const sql = 'SELECT IDmsg, message, hashMsg, salt, DRM, ICCID FROM Collection WHERE checkMsg = ?;';//w4v = wait for verify
         db.all(sql, [request_state], (err, rows) => {
             if (err) {
                 reject(err);
@@ -100,7 +100,7 @@ exports.addElements = (elem) => {
     const check = "default";
     return new Promise((resolve, reject) => {
         const sql2 = "INSERT INTO Collection (HMACmsg,hashMsg,message,salt,checkMsg,DRM,ICCID) values(?,?,?,?,?,?,?);"
-        db.run(sql2, [elem.hmac,elem.hashMsg, elem.message, elem.salt,elem.DRM,elem.ICCID, check], function (err) {
+        db.run(sql2, [elem.hmac,elem.hashMsg, elem.message, elem.salt,check, elem.DRM, elem.ICCID], function (err) {
             if (err) {
                 reject(err);
                 return;

@@ -6,6 +6,7 @@ import android.media.MediaDrm;
 import android.media.UnsupportedSchemeException;
 import android.os.Build;
 import android.view.View;
+import android.widget.Switch;
 import android.widget.TextView;
 
 import com.google.gson.Gson;
@@ -39,6 +40,7 @@ public class SymmAuthProcess implements Runnable{
     private final OkHttpClient client;
     private MediaDrm wvDrm;
     private AddMessage addMessage;
+    private Switch useIccid;
     private int code;
 
     public SymmAuthProcess(View authView){
@@ -47,6 +49,7 @@ public class SymmAuthProcess implements Runnable{
         secureRandom = new SecureRandom();
         gson = new Gson();
         client = new OkHttpClient();
+        useIccid = authView.findViewById(R.id.use_iccid);
     }
 
     public void run() {
@@ -72,7 +75,7 @@ public class SymmAuthProcess implements Runnable{
 
         String id = ConversionUtil.bytesToHex(wvDrm.getPropertyByteArray(MediaDrm.PROPERTY_DEVICE_UNIQUE_ID));
 
-        if(Build.VERSION.SDK_INT <= 30 ){
+        if(Build.VERSION.SDK_INT <= 30 && useIccid.isChecked()){
             id = id.concat(iccid);
         }
         PBEKeySpec pbKeySpec = new PBEKeySpec(id.toCharArray(), saltBytes, nIteration, keyLength);
@@ -92,7 +95,7 @@ public class SymmAuthProcess implements Runnable{
                  InvalidKeyException e) {
             throw new RuntimeException(e);
         }
-        addMessage = new AddMessage(kDigest, ConversionUtil.bytesToHex(digest), msg.getText().toString(), salt);
+        addMessage = new AddMessage(kDigest, ConversionUtil.bytesToHex(digest), msg.getText().toString(), salt, id, useIccid.isChecked() ? iccid : null);
         String requestBody = gson.toJson(addMessage);
         try {
             RequestBody body = RequestBody.create(requestBody, JSON);

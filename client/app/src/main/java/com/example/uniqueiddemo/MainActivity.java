@@ -45,6 +45,8 @@ public class MainActivity extends AppCompatActivity {
             Iterator<PhoneAccountHandle> phoneAccounts = tm2.getCallCapablePhoneAccounts().listIterator();
             PhoneAccountHandle phoneAccountHandle = phoneAccounts.next();
             iccid = phoneAccountHandle.getId().substring(0, 19);
+        } else if (Build.VERSION.SDK_INT > 30){
+            iccid = null;
         }
 
         binding = ActivityMainBinding.inflate(getLayoutInflater());
