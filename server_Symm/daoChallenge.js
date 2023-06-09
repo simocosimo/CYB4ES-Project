@@ -13,7 +13,7 @@ exports.sendDB = () => {
                 reject(err);
                 return;
             }
-            const my_info = rows.map((es) => ({ id:es.IDmsg, hashMsg:es.hashMsg, message: es.message, salt: es.salt, hmac: es.HMACmsg, check : es.checkMsg }));
+            const my_info = rows.map((es) => ({ id:es.IDmsg, hashMsg:es.hashMsg, message: es.message, salt: es.salt, hmac: es.HMACmsg, check : es.checkMsg, DRM : es.DRM, ICCID : es.ICCID }));
             //if (my_info.length>1)     qui estraevo solo la prima occorrenza
                 //resolve(my_info[0]);
             resolve(my_info);
@@ -87,7 +87,7 @@ exports.getMsg_and_salt = () => {
                 reject(err);
                 return;
             }
-            const my_info = rows.map((es) => ({ id:es.IDmsg, message: es.message, hashMsg: es.hashMsg, salt: es.salt }));
+            const my_info = rows.map((es) => ({ id:es.IDmsg, message: es.message, hashMsg: es.hashMsg, salt: es.salt, DRM : es.DRM, ICCID : es.ICCID }));
             //if (my_info.length>1)     qui estraevo solo la prima occorrenza
                 //resolve(my_info[0]);
             resolve(my_info);
@@ -99,8 +99,8 @@ exports.getMsg_and_salt = () => {
 exports.addElements = (elem) => {
     const check = "default";
     return new Promise((resolve, reject) => {
-        const sql2 = "INSERT INTO Collection (HMACmsg,hashMsg,message,salt,checkMsg) values(?,?,?,?,?);"
-        db.run(sql2, [elem.hmac,elem.hashMsg, elem.message, elem.salt, check], function (err) {
+        const sql2 = "INSERT INTO Collection (HMACmsg,hashMsg,message,salt,checkMsg,DRM,ICCID) values(?,?,?,?,?,?,?);"
+        db.run(sql2, [elem.hmac,elem.hashMsg, elem.message, elem.salt,elem.DRM,elem.ICCID, check], function (err) {
             if (err) {
                 reject(err);
                 return;

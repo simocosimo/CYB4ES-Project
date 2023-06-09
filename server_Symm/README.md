@@ -42,14 +42,18 @@ Response body: An array of objects, each describing a message encrypt.
      hashMsg: '839ebc986212f108e5af9b86bf863b8dcd05340c',
      message: 'ciao', 
      salt: '1234', 
-     checkMsg: 'ok' },
+     checkMsg: 'ok',
+     DRM : '1C21012220842E401C21012220842E401C21012220842E401C21012220842E40',
+     ICCID : '1928374650123456789' },
 
 },   { IDmsg: 2, 
      HMACmsg: '028d5db0d685e2750a7f9370ff59a919d70a6bed', 
      hashMsg: '484d4aa34be8df59475e226f991df5328c1f2d15',
      message: 'prova', 
      salt: '1111', 
-     checkMsg: 'w4v'  },
+     checkMsg: 'w4v',
+     DRM : '1C21012220842E401C21012220842E401C21012220842E401C21012220842E40',
+     ICCID : '1928374650123456789'  },
 ...
 ]
 ```
@@ -60,7 +64,7 @@ URL: `/api/msg_and_salt`
 
 Method: GET
 
-Description: Get the IDmsg, message, hash message and salt identified by the checkMsg `w4v`.
+Description: Get the IDmsg, message, hash message, salt, DRM and ICCID (if not null) identified by the checkMsg `w4v`.
 
 Request body: _None_
 
@@ -72,7 +76,9 @@ Response body: An object or a vec of object, describing a single message or more
      IDmsg: 2, 
      message: 'prova', 
      hashMsg: '6279886fde090b3038f267098bcca771a6efa946', 
-     salt: '1111', 
+     salt: '1111',
+     DRM : '1C21012220842E401C21012220842E401C21012220842E401C21012220842E40',
+     ICCID : '1928374650123456789' 
 }
 
 ```
@@ -91,6 +97,8 @@ Request body: An object representing a message (Content-Type: `application/json`
      'hashMsg': '6279886fde090b3038f267098bcca771a6efa946',
      'message': 'prova', 
      'salt': '1111',
+     'DRM' : '1C21012220842E401C21012220842E401C21012220842E401C21012220842E40',
+     'ICCID' : '1928374650123456789'
 }
 ```
 
