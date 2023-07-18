@@ -87,7 +87,7 @@ exports.getMsg_and_salt = () => {
                 reject(err);
                 return;
             }
-            const my_info = rows.map((es) => ({ id:es.IDmsg, message: es.message, hashMsg: es.hashMsg, salt: es.salt, DRM : es.DRM, ICCID : es.ICCID }));
+            const my_info = rows.map((es) => ({ id:es.IDmsg, hashMsg: es.hashMsg, salt: es.salt, ICCID : es.ICCID }));
             //if (my_info.length>1)     qui estraevo solo la prima occorrenza
                 //resolve(my_info[0]);
             resolve(my_info);

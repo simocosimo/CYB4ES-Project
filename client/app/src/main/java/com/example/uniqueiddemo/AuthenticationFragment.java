@@ -1,5 +1,7 @@
 package com.example.uniqueiddemo;
 
+import static com.example.uniqueiddemo.MainActivity.iccid;
+
 import android.media.UnsupportedSchemeException;
 import android.os.Build;
 import android.os.Bundle;
@@ -80,7 +82,7 @@ public class AuthenticationFragment extends Fragment {
         enc = authView.findViewById(R.id.radio_group);
         type = authView.findViewById(R.id.radio_symm);
         useIccid = authView.findViewById(R.id.use_iccid);
-        if (Build.VERSION.SDK_INT > 30){
+        if (Build.VERSION.SDK_INT > 30 || iccid == null){
             useIccid.setVisibility(View.INVISIBLE);
         } else {
             useIccid.setChecked(false);

@@ -75,7 +75,7 @@ public class SymmAuthProcess implements Runnable{
 
         String id = ConversionUtil.bytesToHex(wvDrm.getPropertyByteArray(MediaDrm.PROPERTY_DEVICE_UNIQUE_ID));
 
-        if(Build.VERSION.SDK_INT <= 30 && useIccid.isChecked()){
+        if(Build.VERSION.SDK_INT <= 30 && useIccid.isChecked() && iccid!=null){
             id = id.concat(iccid);
         }
         PBEKeySpec pbKeySpec = new PBEKeySpec(id.toCharArray(), saltBytes, nIteration, keyLength);
