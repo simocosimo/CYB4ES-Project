@@ -10,6 +10,8 @@
         android:id="@+id/ip_addr_verif"
         android:layout_width="342dp"
         android:layout_height="54dp"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
         android:digits="0123456789."
         android:hint="@string/insert_ip"
         android:inputType="phone"
@@ -18,7 +20,7 @@
         app:layout_constraintHorizontal_bias="0.492"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.127">
+        app:layout_constraintVertical_bias="0.125">
 
     </EditText>
 
@@ -36,12 +38,12 @@
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/message_list"
-        android:layout_width="412dp"
-        android:layout_height="321dp"
+        android:layout_width="match_parent"
+        android:layout_height="312dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.629" />
+        app:layout_constraintVertical_bias="0.577" />
 </androidx.constraintlayout.widget.ConstraintLayout>

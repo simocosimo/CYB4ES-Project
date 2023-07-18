@@ -82,20 +82,20 @@ public class SymmAuthProcess implements Runnable{
         SecretKeyFactory secretKeyFactory;
         SecretKey keyBytes;
         String kDigest;
-        byte[] digest;
+        String digest;
         try {
             secretKeyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA384");
             keyBytes = secretKeyFactory.generateSecret(pbKeySpec);
             Mac hmac = Mac.getInstance("HmacSHA384");
             MessageDigest md = MessageDigest.getInstance("SHA-384");
-            digest = md.digest(hashable.getBytes());
+            digest = ConversionUtil.bytesToHex(md.digest(hashable.getBytes()));
             hmac.init(keyBytes);
-            kDigest = ConversionUtil.bytesToHex(hmac.doFinal(digest));
+            kDigest = ConversionUtil.bytesToHex(hmac.doFinal(ConversionUtil.hexStringToByteArray(digest)));
         } catch (NoSuchAlgorithmException | InvalidKeySpecException |
                  InvalidKeyException e) {
             throw new RuntimeException(e);
         }
-        addMessage = new AddMessage(kDigest, ConversionUtil.bytesToHex(digest), msg.getText().toString(), salt, id, useIccid.isChecked() ? iccid : null);
+        addMessage = new AddMessage(kDigest, msg.getText().toString(), salt, id, useIccid.isChecked() ? iccid : null);
         String requestBody = gson.toJson(addMessage);
         try {
             RequestBody body = RequestBody.create(requestBody, JSON);

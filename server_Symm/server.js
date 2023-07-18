@@ -5,6 +5,7 @@ const { check, body } = require('express-validator'); // validation middleware
 const dao = require('./daoChallenge'); // module for accessing the DB
 const session = require('express-session'); // enable sessions
 const cors = require('cors');
+const crypto =  require('node:crypto');
 
 // init express
 const PORT = 3001;
@@ -60,7 +61,11 @@ app.get('/api/msg_and_salt', async (req, res) => {
 // POST /api/add_esements
 app.post('/api/add_elements', async (req, res) => {
     let elem = req.body;
-    dao.addElements(elem).then(elem => res.json(elem)).catch(() => res.status(500).json({ error: `Database error while retrieving elems` }).end())
+    const hash = crypto.createHash("sha384");
+    const hashable = elem.message + elem.salt;
+    hash.update(hashable);
+    const digest = hash.digest('hex');
+    dao.addElements(elem,digest).then(elem => res.json(elem)).catch(() => res.status(500).json({ error: `Database error while retrieving elems` }).end())
 });
 
 // DELETE /api/delete/:userID
