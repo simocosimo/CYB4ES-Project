@@ -64,7 +64,6 @@ public class SymmAuthProcess implements Runnable{
         byte[] saltBytes = new byte[8];
         secureRandom.nextBytes(saltBytes);
         String salt = ConversionUtil.bytesToHex(saltBytes);
-        System.out.println(salt);
         String hashable = msg.getText().toString() + salt;
         int nIteration = 1000;
         int keyLength = 256;
@@ -88,8 +87,6 @@ public class SymmAuthProcess implements Runnable{
         try {
             secretKeyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA384");
             keyBytes = secretKeyFactory.generateSecret(pbKeySpec);
-            byte[] keyEnc = keyBytes.getEncoded();
-            System.out.println(Base64.getEncoder().encodeToString(keyEnc));
             Mac hmac = Mac.getInstance("HmacSHA384");
             MessageDigest md = MessageDigest.getInstance("SHA-384");
             digest = ConversionUtil.bytesToHex(md.digest(hashable.getBytes()));
