@@ -17,6 +17,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
+import java.util.Base64;
 import java.util.UUID;
 
 import javax.crypto.Mac;
@@ -63,6 +64,7 @@ public class SymmAuthProcess implements Runnable{
         byte[] saltBytes = new byte[8];
         secureRandom.nextBytes(saltBytes);
         String salt = ConversionUtil.bytesToHex(saltBytes);
+        System.out.println(salt);
         String hashable = msg.getText().toString() + salt;
         int nIteration = 1000;
         int keyLength = 256;
@@ -74,9 +76,9 @@ public class SymmAuthProcess implements Runnable{
         }
 
         String id = ConversionUtil.bytesToHex(wvDrm.getPropertyByteArray(MediaDrm.PROPERTY_DEVICE_UNIQUE_ID));
-
+        String drm = id;
         if(Build.VERSION.SDK_INT <= 30 && useIccid.isChecked() && iccid!=null){
-            id = id.concat(iccid);
+            id = drm.concat(iccid);
         }
         PBEKeySpec pbKeySpec = new PBEKeySpec(id.toCharArray(), saltBytes, nIteration, keyLength);
         SecretKeyFactory secretKeyFactory;
@@ -86,6 +88,8 @@ public class SymmAuthProcess implements Runnable{
         try {
             secretKeyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA384");
             keyBytes = secretKeyFactory.generateSecret(pbKeySpec);
+            byte[] keyEnc = keyBytes.getEncoded();
+            System.out.println(Base64.getEncoder().encodeToString(keyEnc));
             Mac hmac = Mac.getInstance("HmacSHA384");
             MessageDigest md = MessageDigest.getInstance("SHA-384");
             digest = ConversionUtil.bytesToHex(md.digest(hashable.getBytes()));
@@ -95,7 +99,7 @@ public class SymmAuthProcess implements Runnable{
                  InvalidKeyException e) {
             throw new RuntimeException(e);
         }
-        addMessage = new AddMessage(kDigest, msg.getText().toString(), salt, id, useIccid.isChecked() ? iccid : null);
+        addMessage = new AddMessage(kDigest, msg.getText().toString(), salt, drm, useIccid.isChecked() ? iccid : null);
         String requestBody = gson.toJson(addMessage);
         try {
             RequestBody body = RequestBody.create(requestBody, JSON);

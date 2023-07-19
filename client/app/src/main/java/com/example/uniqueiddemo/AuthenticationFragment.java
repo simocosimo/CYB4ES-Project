@@ -122,7 +122,11 @@ public class AuthenticationFragment extends Fragment {
                     }
                     if (code == 200){
                         Toast.makeText(getContext(),"Message sent correctly",Toast.LENGTH_SHORT).show();
-                    }else {
+                    }
+                    if (code == 501){
+                        Toast.makeText(getContext(),"HMAC not well formed",Toast.LENGTH_SHORT).show();
+                    }
+                    else {
                         Toast.makeText(getContext(),"Somethig went wrong: error code " + code, Toast.LENGTH_SHORT).show();
                     }
                 } else if (type.getId() == R.id.radio_asymm) {

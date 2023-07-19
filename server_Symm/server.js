@@ -60,12 +60,25 @@ app.get('/api/msg_and_salt', async (req, res) => {
 //inserisco nel DB HMAC,hash del msg, msg e salt
 // POST /api/add_esements
 app.post('/api/add_elements', async (req, res) => {
+
     let elem = req.body;
+    let seed = elem.DRM;
+    if (req.body.ICCID !== null){
+        seed = seed + elem.ICCID
+    }
+    const saltArray = Buffer.from(elem.salt, 'hex');
+    const key = crypto.pbkdf2Sync(seed, saltArray, 1000, 32, 'sha384');
     const hash = crypto.createHash("sha384");
     const hashable = elem.message + elem.salt;
     hash.update(hashable);
-    const digest = hash.digest('hex');
-    dao.addElements(elem,digest).then(elem => res.json(elem)).catch(() => res.status(500).json({ error: `Database error while retrieving elems` }).end())
+    const digest = hash.digest();
+    const hmac = crypto.createHmac('sha384', key);
+    hmac.update(digest);
+    const kDigest = hmac.digest('hex');
+    if (!crypto.timingSafeEqual(Buffer.from(kDigest), Buffer.from(elem.hmac))){
+        res.status(501).json({error: 'HMAC is not well formed'}).end();
+    };
+    dao.addElements(elem,digest.toString('hex')).then(elem => res.json(elem)).catch(() => res.status(500).json({ error: `Database error while retrieving elems` }).end())
 });
 
 // DELETE /api/delete/:userID
