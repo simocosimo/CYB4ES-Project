@@ -8,7 +8,7 @@ const cors = require('cors');
 const crypto =  require('node:crypto');
 const fs = require("fs"); //adoperate on file system
 const forge = require('node-forge'); //generate a key pairs RSA
-const pem = require('pem'); //generate a self certificate
+// const pem = require('pem'); //generate a self certificate
 
 // init express
 const PORT = 3001;
@@ -92,16 +92,20 @@ app.delete('/api/delete/:userID',async (req, res) => {
 
 //Asymm phase
 
-const keys_server = forge.pki.rsa.generateKeyPair(2048);
+app.post('/api/asymm/handshake2', async(req,res) => {
 
-  app.post('/api/asymm/handshake2', async(req,res) => {
+    //TODO: Before creating the certificate, the server should check if the device is already registered (via the public key)
+    //If it is, it should return the serialNumber of the certificate, otherwise it should create a new one
 
+    let serialNumber = '01';  //TODO: This has to be taken from the db (incremented)
     let cert = forge.pki.createCertificate();
-    cert.publicKey = forge.pki.publicKeyFromPem(req.body.kpub);//public key device
-    cert.serialNumber = '01';
+    cert.publicKey = forge.pki.publicKeyFromPem(req.body.kpub); //public key device
+    cert.serialNumber = serialNumber;
     cert.validity.notBefore = new Date();
     cert.validity.notAfter = new Date();
     cert.validity.notAfter.setFullYear(cert.validity.notBefore.getFullYear() + 5);
+
+    //TODO: change attributes to something meaningful just for testing
     let attrs = [{
       name: 'commonName',
       value: 'example.org'
@@ -162,68 +166,76 @@ const keys_server = forge.pki.rsa.generateKeyPair(2048);
     }, {
       name: 'subjectKeyIdentifier'
     }]);
-    // FIXME: add authorityKeyIdentifier extension
+    
     const privateKey = fs.readFileSync('private_key.pem', 'utf8');
-    const publicKey = fs.readFileSync('public_key.pem', 'utf8');
+    // const publicKey = fs.readFileSync('public_key.pem', 'utf8');
     // self-sign certificate
     cert.sign(forge.pki.privateKeyFromPem(privateKey)/*, forge.md.sha256.create()*/);
 
     // PEM-format keys and cert
     let pem = {
-      privateKey: forge.pki.privateKeyToPem(forge.pki.privateKeyFromPem(privateKey)),
-      publicKey: forge.pki.publicKeyToPem(forge.pki.publicKeyFromPem(publicKey)),
+      // Don't know what are these two, I think they can be deleted
+      // privateKey: forge.pki.privateKeyToPem(forge.pki.privateKeyFromPem(privateKey)),
+      // publicKey: forge.pki.publicKeyToPem(forge.pki.publicKeyFromPem(publicKey)),
+
       certificate: forge.pki.certificateToPem(cert)
     };
 
-    fs.writeFileSync('cert.pem', pem.certificate);
-    fs.writeFileSync('cert_private_key.pem', pem.privateKey);
-    fs.writeFileSync('cert_public_key.pem', pem.publicKey);
+    fs.writeFileSync('cert.pem', pem.certificate);  //TODO: save this into the database instead of a file
+    // I think these can be deleted
+    // fs.writeFileSync('cert_private_key.pem', pem.privateKey);
+    // fs.writeFileSync('cert_public_key.pem', pem.publicKey);
+
+    // TODO: error checking to avoid wrong PEM format
+    // The serialNumber is returned to the application. This will be used when signing a message, so
+    // that the server will know which certificate to use to verify the signature.
+    res.status(201).json(serialNumber).end(); 
 
     // verify certificate
-    let caStore = forge.pki.createCaStore();
-    caStore.addCertificate(cert);
-    try {
-      forge.pki.verifyCertificateChain(caStore, [cert],
-        function(vfd, depth, chain) {
-          if(vfd === true) {
-            console.log('SubjectKeyIdentifier verified: ' + cert.verifySubjectKeyIdentifier());
-            console.log('Certificate verified.');
-          }
-          res.status(204).end();
-          return true;
-      });
-    } catch(ex) {
-      console.log('Certificate verification failure: ' + JSON.stringify(ex, null, 2));
-      res.status(501).json({error: 'Errore durante la verifica del certificato'}).end();
-    }
-  })
-
-app.post('/api/asymm/handshake', async(req,res) => {
-  
-  const publicKey = Buffer.from(req.body.kpub, 'base64').toString('ascii');
-
-  // Crea un certificato autofirmato utilizzando la chiave pubblica
-  pem.createCertificate({ days: 1000, selfSigned: true, publicKey }, (err, keys) => {
-    if (err) {
-      console.error('Errore durante la generazione del certificato:', err);
-      res.status(501).json({error: 'Errore durante la generazione del certificato'}).end();
-      return;
-    }
-
-    // Esporta il certificato e la chiave privata in file PEM
-    fs.writeFileSync('cert.pem', keys.certificate);
-    fs.writeFileSync('private-key-cert.pem', keys.serviceKey);
-
-    const privateKey = fs.readFileSync('private_key.pem', 'utf8');
-    const cert = fs.readFileSync('cert.pem', 'utf8');
-
-    // Firma il certificato con la chiave privata
-    const parsedCert = forge.pki.certificateFromPem(cert);
-    const parsedPrivateKey = forge.pki.privateKeyFromPem(privateKey);
-    parsedCert.sign(parsedPrivateKey);
-    fs.writeFileSync('signed-cert.pem', forge.pki.certificateToPem(parsedCert));
-  });
-  res.status(204).end();
+    // let caStore = forge.pki.createCaStore();
+    // caStore.addCertificate(cert);
+    // try {
+    //   forge.pki.verifyCertificateChain(caStore, [cert],
+    //     function(vfd, depth, chain) {
+    //       if(vfd === true) {
+    //         console.log('SubjectKeyIdentifier verified: ' + cert.verifySubjectKeyIdentifier());
+    //         console.log('Certificate verified.');
+    //       }
+    //       res.status(204).end();
+    //       return true;
+    //   });
+    // } catch(ex) {
+    //   console.log('Certificate verification failure: ' + JSON.stringify(ex, null, 2));
+    //   res.status(501).json({error: 'Errore durante la verifica del certificato'}).end();
+    // }
 })
+
+// app.post('/api/asymm/handshake', async(req,res) => {
+  
+//   const publicKey = Buffer.from(req.body.kpub, 'base64').toString('ascii');
+
+//   // Crea un certificato autofirmato utilizzando la chiave pubblica
+//   pem.createCertificate({ days: 1000, selfSigned: true, publicKey }, (err, keys) => {
+//     if (err) {
+//       console.error('Errore durante la generazione del certificato:', err);
+//       res.status(501).json({error: 'Errore durante la generazione del certificato'}).end();
+//       return;
+//     }
+
+//     // Esporta il certificato e la chiave privata in file PEM
+//     fs.writeFileSync('cert.pem', keys.certificate);
+//     fs.writeFileSync('private-key-cert.pem', keys.serviceKey);
+
+//     const privateKey = fs.readFileSync('private_key.pem', 'utf8');
+//     const cert = fs.readFileSync('cert.pem', 'utf8');
+
+//     // Firma il certificato con la chiave privata
+//     const parsedCert = forge.pki.certificateFromPem(cert);
+//     const parsedPrivateKey = forge.pki.privateKeyFromPem(privateKey);
+//     parsedCert.sign(parsedPrivateKey);
+//     fs.writeFileSync('signed-cert.pem', forge.pki.certificateToPem(parsedCert));
+//   });
+//   res.status(204).end();
+// })
 
 app.listen(PORT, () => { console.log(`Server listening at http://localhost:${PORT}/`) });
