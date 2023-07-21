@@ -1,5 +1,7 @@
 package com.example.uniqueiddemo;
 
+import static com.example.uniqueiddemo.MainActivity.iccid;
+
 import android.media.UnsupportedSchemeException;
 import android.os.Build;
 import android.os.Bundle;
@@ -80,7 +82,7 @@ public class AuthenticationFragment extends Fragment {
         enc = authView.findViewById(R.id.radio_group);
         type = authView.findViewById(R.id.radio_symm);
         useIccid = authView.findViewById(R.id.use_iccid);
-        if (Build.VERSION.SDK_INT > 30){
+        if (Build.VERSION.SDK_INT > 30 || iccid == null){
             useIccid.setVisibility(View.INVISIBLE);
         } else {
             useIccid.setChecked(false);
@@ -93,6 +95,9 @@ public class AuthenticationFragment extends Fragment {
             }else if (i == R.id.radio_asymm){
                 type = authView.findViewById(i);
                 Toast.makeText(authView.getContext(), type.getText() + " chosen", Toast.LENGTH_SHORT).show();
+                // Generate the keypair, for now just for looking at the logs and see if they're the same
+                // every time the asymm option is selected
+                AsymmHandshakeHandler.keyGen();
             }
 
 
@@ -117,7 +122,11 @@ public class AuthenticationFragment extends Fragment {
                     }
                     if (code == 200){
                         Toast.makeText(getContext(),"Message sent correctly",Toast.LENGTH_SHORT).show();
-                    }else {
+                    }
+                    if (code == 501){
+                        Toast.makeText(getContext(),"HMAC not well formed",Toast.LENGTH_SHORT).show();
+                    }
+                    else {
                         Toast.makeText(getContext(),"Somethig went wrong: error code " + code, Toast.LENGTH_SHORT).show();
                     }
                 } else if (type.getId() == R.id.radio_asymm) {

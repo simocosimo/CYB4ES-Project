@@ -87,7 +87,7 @@ exports.getMsg_and_salt = () => {
                 reject(err);
                 return;
             }
-            const my_info = rows.map((es) => ({ id:es.IDmsg, message: es.message, hashMsg: es.hashMsg, salt: es.salt, DRM : es.DRM, ICCID : es.ICCID }));
+            const my_info = rows.map((es) => ({ id:es.IDmsg, hashMsg: es.hashMsg, salt: es.salt, ICCID : es.ICCID }));
             //if (my_info.length>1)     qui estraevo solo la prima occorrenza
                 //resolve(my_info[0]);
             resolve(my_info);
@@ -96,11 +96,11 @@ exports.getMsg_and_salt = () => {
 };
 
 // add new elem 
-exports.addElements = (elem) => {
+exports.addElements = (elem, digest) => {
     const check = "default";
     return new Promise((resolve, reject) => {
         const sql2 = "INSERT INTO Collection (HMACmsg,hashMsg,message,salt,checkMsg,DRM,ICCID) values(?,?,?,?,?,?,?);"
-        db.run(sql2, [elem.hmac,elem.hashMsg, elem.message, elem.salt,check, elem.DRM, elem.ICCID], function (err) {
+        db.run(sql2, [elem.hmac, digest, elem.message, elem.salt,check, elem.DRM, elem.ICCID], function (err) {
             if (err) {
                 reject(err);
                 return;

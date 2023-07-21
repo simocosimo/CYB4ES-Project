@@ -84,7 +84,8 @@ public class MainActivity extends AppCompatActivity {
                     iccid = phoneAccountHandle.getId().substring(0,19);
 
                 } else {
-                    Toast.makeText(getApplicationContext(), "Permission denied: please grant phone permissions", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getApplicationContext(), "The ICCID will not be used to generate the key", Toast.LENGTH_SHORT).show();
+                    iccid = null;
                 }
             }
 
