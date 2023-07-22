@@ -92,125 +92,133 @@ app.delete('/api/delete/:userID',async (req, res) => {
 
 //Asymm phase
 
-app.post('/api/asymm/handshake2', async(req,res) => {
+app.post('/api/asymm/handshake', async(req,res) => {
 
-    //TODO: Before creating the certificate, the server should check if the device is already registered (via the public key)
-    //If it is, it should return the serialNumber of the certificate, otherwise it should create a new one
-
-    let serialNumber = '01';  //TODO: This has to be taken from the db (incremented)
-    let cert = forge.pki.createCertificate();
-    cert.publicKey = forge.pki.publicKeyFromPem(req.body.kpub); //public key device
-    cert.serialNumber = serialNumber;
-    cert.validity.notBefore = new Date();
-    cert.validity.notAfter = new Date();
-    cert.validity.notAfter.setFullYear(cert.validity.notBefore.getFullYear() + 5);
-
-    //TODO: change attributes to something meaningful just for testing
-    let attrs = [{
-      name: 'commonName',
-      value: 'example.org'
-    }, {
-      name: 'countryName',
-      value: 'US'
-    }, {
-      shortName: 'ST',
-      value: 'Virginia'
-    }, {
-      name: 'localityName',
-      value: 'Blacksburg'
-    }, {
-      name: 'organizationName',
-      value: 'Test'
-    }, {
-      shortName: 'OU',
-      value: 'Test'
-    }];
-    cert.setSubject(attrs);
-    cert.setIssuer(attrs);
-    cert.setExtensions([{
-      name: 'basicConstraints',
-      cA: true/*,
-      pathLenConstraint: 4*/
-    }, {
-      name: 'keyUsage',
-      keyCertSign: true,
-      digitalSignature: true,
-      nonRepudiation: true,
-      keyEncipherment: true,
-      dataEncipherment: true
-    }, {
-      name: 'extKeyUsage',
-      serverAuth: true,
-      clientAuth: true,
-      codeSigning: true,
-      emailProtection: true,
-      timeStamping: true
-    }, {
-      name: 'nsCertType',
-      client: true,
-      server: true,
-      email: true,
-      objsign: true,
-      sslCA: true,
-      emailCA: true,
-      objCA: true
-    }, {
-      name: 'subjectAltName',
-      altNames: [{
-        type: 6, // URI
-        value: 'http://example.org/webid#me'
-      }, {
-        type: 7, // IP
-        ip: '127.0.0.1'
-      }]
-    }, {
-      name: 'subjectKeyIdentifier'
-    }]);
+    let serialNumber= -1;
+    try{
+      serialNumber = await dao.getIDCertFromKpub(req.body.kpub);
+      if (serialNumber == 0){
+        let newSerialNumber;
+        try{
+          newSerialNumber = await dao.getIDCert();
+          let cert = forge.pki.createCertificate();
+          cert.publicKey = forge.pki.publicKeyFromPem(req.body.kpub); //public key device
+          cert.serialNumber = newSerialNumber;
+          cert.validity.notBefore = new Date();
+          cert.validity.notAfter = new Date();
+          cert.validity.notAfter.setFullYear(cert.validity.notBefore.getFullYear() + 5);
     
-    const privateKey = fs.readFileSync('private_key.pem', 'utf8');
-    // const publicKey = fs.readFileSync('public_key.pem', 'utf8');
-    // self-sign certificate
-    cert.sign(forge.pki.privateKeyFromPem(privateKey)/*, forge.md.sha256.create()*/);
+          let attrs = [{
+            name: 'commonName',
+            value: 'polito.it'
+          }, {
+            name: 'countryName',
+            value: 'IT'
+          }, {
+            shortName: 'ST',
+            value: 'Piemonte'
+          }, {
+            name: 'localityName',
+            value: 'Torino'
+          }, {
+            name: 'organizationName',
+            value: 'Test'
+          }, {
+            shortName: 'OU',
+            value: 'Test'
+          }];
+          cert.setSubject(attrs);
+          cert.setIssuer(attrs);
+          cert.setExtensions([{
+            name: 'basicConstraints',
+            cA: true/*,
+            pathLenConstraint: 4*/
+          }, {
+            name: 'keyUsage',
+            keyCertSign: true,
+            digitalSignature: true,
+            nonRepudiation: true,
+            keyEncipherment: true,
+            dataEncipherment: true
+          }, {
+            name: 'extKeyUsage',
+            serverAuth: true,
+            clientAuth: true,
+            codeSigning: true,
+            emailProtection: true,
+            timeStamping: true
+          }, {
+            name: 'nsCertType',
+            client: true,
+            server: true,
+            email: true,
+            objsign: true,
+            sslCA: true,
+            emailCA: true,
+            objCA: true
+          }, {
+            name: 'subjectAltName',
+            altNames: [{
+              type: 6, // URI
+              value: 'http://example.org/webid#me'
+            }, {
+              type: 7, // IP
+              ip: '127.0.0.1'
+            }]
+          }, {
+            name: 'subjectKeyIdentifier'
+          }]);
+          
+          const privateKey = fs.readFileSync('private_key.pem', 'utf8');
 
-    // PEM-format keys and cert
-    let pem = {
-      // Don't know what are these two, I think they can be deleted
-      // privateKey: forge.pki.privateKeyToPem(forge.pki.privateKeyFromPem(privateKey)),
-      // publicKey: forge.pki.publicKeyToPem(forge.pki.publicKeyFromPem(publicKey)),
-
-      certificate: forge.pki.certificateToPem(cert)
-    };
-
-    fs.writeFileSync('cert.pem', pem.certificate);  //TODO: save this into the database instead of a file
-    // I think these can be deleted
-    // fs.writeFileSync('cert_private_key.pem', pem.privateKey);
-    // fs.writeFileSync('cert_public_key.pem', pem.publicKey);
-
-    // TODO: error checking to avoid wrong PEM format
-    // The serialNumber is returned to the application. This will be used when signing a message, so
-    // that the server will know which certificate to use to verify the signature.
-    res.status(201).json(serialNumber).end(); 
-
-    // verify certificate
-    // let caStore = forge.pki.createCaStore();
-    // caStore.addCertificate(cert);
-    // try {
-    //   forge.pki.verifyCertificateChain(caStore, [cert],
-    //     function(vfd, depth, chain) {
-    //       if(vfd === true) {
-    //         console.log('SubjectKeyIdentifier verified: ' + cert.verifySubjectKeyIdentifier());
-    //         console.log('Certificate verified.');
-    //       }
-    //       res.status(204).end();
-    //       return true;
-    //   });
-    // } catch(ex) {
-    //   console.log('Certificate verification failure: ' + JSON.stringify(ex, null, 2));
-    //   res.status(501).json({error: 'Errore durante la verifica del certificato'}).end();
-    // }
+          // self-sign certificate
+          cert.sign(forge.pki.privateKeyFromPem(privateKey)/*, forge.md.sha256.create()*/);
+    
+          // PEM-format keys and cert
+          let pem = { certificate: forge.pki.certificateToPem(cert) };
+    
+          //fs.writeFileSync('cert.pem', pem.certificate);  
+          
+          //save serialNumber, cert, Kpub into the database
+          try {
+            await dao.addCertificate(newSerialNumber,req.body.kpub,pem.certificate);
+            const ObjSerialNum = {serialNumber : newSerialNumber};
+            res.status(201).json(ObjSerialNum).end(); 
+        } catch (err) {
+            res.status(503).json({ error: `Database error during the insertion of the serialNumber, Kpub, certSigned into the DB` });
+        }
+    
+          // verify certificate
+          // let caStore = forge.pki.createCaStore();
+          // caStore.addCertificate(cert);
+          // try {
+          //   forge.pki.verifyCertificateChain(caStore, [cert],
+          //     function(vfd, depth, chain) {
+          //       if(vfd === true) {
+          //         console.log('SubjectKeyIdentifier verified: ' + cert.verifySubjectKeyIdentifier());
+          //         console.log('Certificate verified.');
+          //       }
+          //       res.status(204).end();
+          //       return true;
+          //   });
+          // } catch(ex) {
+          //   console.log('Certificate verification failure: ' + JSON.stringify(ex, null, 2));
+          //   res.status(501).json({error: 'Errore durante la verifica del certificato'}).end();
+          // }
+        }catch (err){
+          res.status(503).json({ error: `Database error during the extraction of the max serial number.` });
+        }
+      }
+      else{
+        const ObjSerialNum = {serialNumber : serialNumber};
+        res.status(201).json(ObjSerialNum).end();
+      }
+    } catch (err) {
+      res.status(503).json({ error: `Database error during the extraction of the serial number with k_pub: ${req.body.kpub}.` });
+    }
 })
 
-// app.post('/api/asymm/handshake', async(req,res) => {
+// app.post('/api/asymm/handshake2', async(req,res) => {
   
 //   const publicKey = Buffer.from(req.body.kpub, 'base64').toString('ascii');
 

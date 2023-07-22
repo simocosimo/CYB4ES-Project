@@ -126,7 +126,29 @@ exports.deleteFromDB = (userID) => {
 
 //ASYMMETRIC PHASE
 
+//ottengo il serial number dalla K_pub se esiste
+exports.getIDCertFromKpub = (digest) => {
+    return new Promise((resolve, reject) => {
+        const sql = 'SELECT id_cert FROM certificates WHERE K_pub = ?;';
+        db.all(sql, [digest], (err, rows) => {
+            if (err) {
+                reject(err);
+                return;
+            }
+            let my_info= 0;
+            if (rows.length>=1)
+                my_info = rows[0].id_cert;
+            else
+                my_info = rows.id_cert;
+                
+            if (my_info === undefined)
+                my_info = 0;
+            resolve(my_info);
+        });
+    });
+}
 
+//prendo il max valore e lo incremento di 1
 exports.getIDCert = () => {
     return new Promise((resolve, reject) => {
         const sql = 'SELECT id_cert FROM certificates ORDER BY id_cert DESC;';
@@ -137,12 +159,26 @@ exports.getIDCert = () => {
             }
             let my_info;
             if (rows.length>1)
-                my_info = rows[0].id_cert;
+                my_info = rows[0].id_cert +1 ;
             else 
-                my_info = rows.id_cert;
+                my_info = rows.id_cert +1;
             resolve(my_info);
         });
-        const val = 0;
+        const val = 1;
         resolve(val);
     });
+}
+
+//inserisco nel DB serial number, K_pub del client e cert signed
+exports.addCertificate = (serialNumber,kpub,cert) => {
+    return new Promise((resolve, reject) => {
+        const sql = "INSERT INTO certificates (K_pub,cert,id_cert) values(?,?,?);"
+        db.run(sql, [kpub,cert,serialNumber], function (err) {
+            if (err) {
+                reject(err);
+                return;
+            }
+            resolve(this.lastID);
+        });
+    });  
 }

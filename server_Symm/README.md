@@ -178,4 +178,10 @@ Request body: An object representing a message (Content-Type: `application/json`
 
 Response: `204 Created` (success) or `503 Service Unavailable` (generic error). If the request body is not valid, `422 Unprocessable Entity` (validation error).
 
-Response body: _None_
+Response body: An object which describe the serial number of the certificate.
+
+```
+{
+     "serialNumber":1
+}
+```
