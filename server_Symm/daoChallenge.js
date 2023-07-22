@@ -220,3 +220,50 @@ exports.addAsymmElements = (elem) => {
         });
     });
 }
+
+// seleziono tutte le righe che corrispondono a check_msg = w4v && serialNumber passato dall'app.
+exports.getMsgW4V = (serialNumber) => {
+    const checkMsg = "w4v";
+    return new Promise((resolve, reject) => {
+        const sql = 'SELECT * FROM Asymm_table WHERE serialNumber = ? AND check_msg = ?;';
+        db.all(sql, [serialNumber, checkMsg], (err, rows) => {
+            if (err) {
+                reject(err);
+                return;
+            }
+            const my_info = rows.map((es) => ({ id_msg: es.id_msg, msg: es.msg, hash_msg: es.hash_msg, signature_msg: es.signature_msg }));
+            resolve(my_info);
+        });
+    });
+}
+
+// aggiorno il check_msg dato il corrispettivo id_msg già verificato lato client.
+exports.updateCheckAsymm = (elem) => {
+    return new Promise((resolve, reject) => {
+        const update = () => {
+            const check = "ok";
+            const sql2 = 'UPDATE Asymm_table SET check_msg=? WHERE id_msg = ?;';
+            db.run(sql2, [check, elem.id], function (err) {
+                if (err) {
+                    reject(err);
+                    return;
+                }
+                extract(elem);
+            });
+        }
+
+        const extract = (elem) => {
+            const check = "ok";
+            const sql3 = 'SELECT id_msg, msg, signature_msg FROM Asymm_table WHERE check_msg = ? AND id_msg= ?;';
+            db.all(sql3, [check, elem.id], (err, rows) => {
+                if (err) {
+                    reject(err);
+                    return;
+                }const my_info = rows.map((es) => ({ id_msg: es.id_msg, msg: es.msg, signature_msg: es.signature_msg }));
+                resolve(my_info[0]);
+            });
+        };
+
+        update();
+    });
+}

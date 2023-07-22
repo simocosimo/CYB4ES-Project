@@ -208,3 +208,66 @@ Request body: An object representing a message (Content-Type: `application/json`
 Response: `201 Created` (success) or `503 Service Unavailable` (generic error). If the request body is not valid, `422 Unprocessable Entity` (validation error).
 
 Response body: _None_
+
+### __Verify message__
+
+URL: `/api/asymm/verify/:serialNumber`
+
+Method: GET
+
+Description: the server checks for messages in w4v state given a serial number.
+
+Response: `201 Created` (success) or `503 Service Unavailable` (generic error). If the request body is not valid, `422 Unprocessable Entity` (validation error).
+
+Response body: a vector of objects containing messages in w4v state given the serial number passed as a parameter in the URL
+
+```
+[
+     {
+          "id_msg":2,
+          "msg":"ciao",
+          "hash_msg":"6eda4fcc7685abba4345b5c30dc13885aff7359a51d1877c7c55cf305dd52fc622bcd1a8183ac2e7c7fdc1fc14c3f685","signature_msg":"c97cffee6b0aee809aadf4875a0e4667b695b4e1715356b529142218906b0491a6d9b62e7a687250c1936d26725f4f83cde223f4de1034b4ffb08ae45043608af9c2058837920a527eb66b7065822c4c2a49a7a45e83e5065914cc85aaebb9c6b08cde40137751cbc23a4ec8f80668095da1a3804d5267c60eac4ff9a800748c218064e1924649c6efa9e825f5fb583ed667b355d07cc446ffd7dbac2d565f63f1d61605f0fb989b6622a56cccf6a67a704b78b3d1a0f567cb1cc05c2b41c7ed8444a4980883fb9729d626af87a58f60b886635661383a142ea53fd7d88c00cf92b1dc7439f22082b9f78ea782ff13b0b04f66d3155fb384f703572a03265185"
+     }
+]
+```
+
+### __Update the Check__
+
+URL: `/api/asymm/updateCheck`
+
+Method: PUT
+
+Description: Update existing rows, identified by its id_msg.
+
+Request body: An array of objects representing the entire message (Content-Type: `application/json`).
+
+```
+{
+     "update":
+     [
+          {"id": 1},
+          {"id": 2},
+          {"id": 3},
+          {"id": 4},
+          ...
+     ]
+}
+```
+
+Response: `200 OK` (success) or `503 Service Unavailable` (generic error). If the request body is not valid, `422 Unprocessable Entity` (validation error).
+
+Response body: An array of objects representing the messages with check==ok (Content-Type: `application/json`).
+
+```
+[
+     {
+          "id_msg":2,
+          "msg":"ciao","signature_msg":"c97cffee6b0aee809aadf4875a0e4667b695b4e1715356b529142218906b0491a6d9b62e7a687250c1936d26725f4f83cde223f4de1034b4ffb08ae45043608af9c2058837920a527eb66b7065822c4c2a49a7a45e83e5065914cc85aaebb9c6b08cde40137751cbc23a4ec8f80668095da1a3804d5267c60eac4ff9a800748c218064e1924649c6efa9e825f5fb583ed667b355d07cc446ffd7dbac2d565f63f1d61605f0fb989b6622a56cccf6a67a704b78b3d1a0f567cb1cc05c2b41c7ed8444a4980883fb9729d626af87a58f60b886635661383a142ea53fd7d88c00cf92b1dc7439f22082b9f78ea782ff13b0b04f66d3155fb384f703572a03265185"
+     },
+     {
+          "id_msg":3,
+          "msg":"prova","signature_msg":"c97cffee6b0aee809aadf4875a0e4667b695b4e1715356b529142218906b0491a6d9b62e7a687250c1936d26725f4f83cde223f4de1034b4ffb08ae45043608af9c2058837920a527eb66b7065822c4c2a49a7a45e83e5065914cc85aaebb9c6b08cde40137751cbc23a4ec8f80668095da1a3804d5267c60eac4ff9a800748c218064e1924649c6efa9e825f5fb583ed667b355d07cc446ffd7dbac2d565f63f1d61605f0fb989b6622a56cccf6a67a704b78b3d1a0f567cb1cc05c2b41c7ed8444a4980883fb9729d626af87a58f60b886635661383a142ea53fd7d88c00cf92b1dc7439f22082b9f78ea782ff13b0b04f66d3155fb384f703572a03265185"
+     }
+     ...
+]
+```

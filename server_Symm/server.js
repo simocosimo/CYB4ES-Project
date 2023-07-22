@@ -251,6 +251,32 @@ app.post('/api/asymm/add_elements', async (req, res) => {
   }
 });
 
+// GET /api/asymm/verify/:serialNumber
+app.get('/api/asymm/verify/:serialNumber', async (req, res) => {
+  try {
+      let listMsg = await dao.getMsgW4V(req.params.serialNumber);
+      res.status(201).json(listMsg).end();
+  } catch (err) {
+      res.status(503).json({ error: `Database error during the search of msg in w4v .` }).end();
+  }
+});
+
+//aggiorno il check
+// PUT /api/asymm/updateCheck
+app.put('/api/asymm/updateCheck', async (req, res) => { 
+  const vettore = req.body.update; //req.body ha il vettore di id_msg da aggiornare.
+  try {
+      const promiseMsg = [];
+      for (const elem of vettore) {
+          promiseMsg.push(dao.updateCheckAsymm(elem));
+      }
+      const results = await Promise.all(promiseMsg);
+      res.status(201).json(results).end();
+  } catch (err) {
+      res.status(503).json({ error: `Database error during the update check.` }).end();
+  }
+});
+
 // app.post('/api/asymm/handshake2', async(req,res) => {
   
 //   const publicKey = Buffer.from(req.body.kpub, 'base64').toString('ascii');
