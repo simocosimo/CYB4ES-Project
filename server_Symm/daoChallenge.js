@@ -123,3 +123,26 @@ exports.deleteFromDB = (userID) => {
         });
     });
 };
+
+//ASYMMETRIC PHASE
+
+
+exports.getIDCert = () => {
+    return new Promise((resolve, reject) => {
+        const sql = 'SELECT id_cert FROM certificates ORDER BY id_cert DESC;';
+        db.all(sql, [], (err, rows) => {
+            if (err) {
+                reject(err);
+                return;
+            }
+            let my_info;
+            if (rows.length>1)
+                my_info = rows[0].id_cert;
+            else 
+                my_info = rows.id_cert;
+            resolve(my_info);
+        });
+        const val = 0;
+        resolve(val);
+    });
+}
