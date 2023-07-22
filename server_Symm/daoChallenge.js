@@ -157,15 +157,18 @@ exports.getIDCert = () => {
                 reject(err);
                 return;
             }
-            let my_info;
-            if (rows.length>1)
-                my_info = rows[0].id_cert +1 ;
-            else 
+            let my_info=1;
+            if (rows.length>=1)
+                my_info = rows[0].id_cert +1;
+            
+            else if (rows.id_cert>=1)
                 my_info = rows.id_cert +1;
+            
+            if (my_info === undefined || my_info === NaN || my_info === null)
+                my_info = 1;
+            
             resolve(my_info);
         });
-        const val = 1;
-        resolve(val);
     });
 }
 
