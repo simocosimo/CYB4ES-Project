@@ -19,7 +19,7 @@ Provide a short description of the API you designed, with the required parameter
 * [A (small) sample response, with body (if any)]
 * [Error responses, if any]
 
-## APIs
+## APIs Symmetric Ecryption
 Hereafter, we report the designed HTTP APIs, also implemented in the project.
 
 ### __List of entry on the DB__
@@ -153,5 +153,29 @@ Description: Delete an existing message, identified by its id.
 Request body: _None_
 
 Response: `204 No Content` (success) or `503 Service Unavailable` (generic error).
+
+Response body: _None_
+
+
+## APIs Asymmetric Ecryption
+Hereafter, we report the designed HTTP APIs, also implemented in the project.
+
+### __Handshake phase__
+
+URL: `/api/asymm/handshake`
+
+Method: POST
+
+Description: creation of a certificate using the public key's device and self signed it using private key's server.
+
+Request body: An object representing a message (Content-Type: `application/json`).
+
+```
+{    
+     "kpub" : "-----BEGIN PUBLIC KEY-----MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA5TO/SCYHoeudCfm4FzNH36eTx5D76HYdQGN/lyvKzP1DF2nUyluDq9hDvx8PK5ogppc3wlptD8zdsLJ/    +uNh7UYfCscnIiTY+QYAc51HKM/E1dm+tqk2Xu952F6cQv0klYCuNCoKhwgcLta9p+zSTI0E8Gnptknpt8+FePpHSRNN3Fvcg7vun7jmk2qpweSEBcuK31fZYKXtw2rGIeNo7sGILN5WEdOjE2ShFeY34erzw3n3Nl4iFJ9ZK0hK+79itXrwsZm54n2etIzwlLeHHGfHJbNHMu9GHAd2rv+0VpjYWmOF8VaCFjtzA/8dD3/EuvGzFDvSDfIfbUgJDuIZ1QIDAQAB-----END PUBLIC KEY-----"
+}
+```
+
+Response: `204 Created` (success) or `503 Service Unavailable` (generic error). If the request body is not valid, `422 Unprocessable Entity` (validation error).
 
 Response body: _None_
