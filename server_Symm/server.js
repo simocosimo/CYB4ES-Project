@@ -76,7 +76,7 @@ app.post('/api/add_elements', async (req, res) => {
     if (!crypto.timingSafeEqual(Buffer.from(kDigest), Buffer.from(elem.hmac))){
         res.status(501).json({error: 'HMAC is not well formed'}).end();
     };
-    dao.addElements(elem,digest.toString('hex')).then(elem => res.json(elem)).catch(() => res.status(500).json({ error: `Database error while retrieving elems` }).end())
+    dao.addElements(elem,digest.toString('hex')).then(elem => res.json(elem)).catch(() => res.status(500).json({ error: `Database error while retrieving elems` }).end());
 });
 
 // DELETE /api/delete/:userID
@@ -92,6 +92,9 @@ app.delete('/api/delete/:userID',async (req, res) => {
 
 //Asymm phase
 
+//creates a signed certificate if it does not exist, otherwise it returns the serial number that associates client public key and signed certificate
+
+//POST /api/asymm/handshake
 app.post('/api/asymm/handshake', async(req,res) => {
 
     let serialNumber= -1;
@@ -176,9 +179,7 @@ app.post('/api/asymm/handshake', async(req,res) => {
     
           // PEM-format keys and cert
           let pem = { certificate: forge.pki.certificateToPem(cert) };
-    
-          //fs.writeFileSync('cert.pem', pem.certificate);  
-          
+              
           //save serialNumber, cert, Kpub into the database
           try {
             await dao.addCertificate(newSerialNumber,req.body.kpub,pem.certificate);
@@ -217,6 +218,38 @@ app.post('/api/asymm/handshake', async(req,res) => {
       res.status(503).json({ error: `Database error during the extraction of the serial number with k_pub: ${req.body.kpub}.` });
     }
 })
+
+
+//inserisco nel DB msg, id_msg, signature_msg, hash_msg, serialNumber e check
+// POST /api/asymm/add_esements
+app.post('/api/asymm/add_elements', async (req, res) => {
+
+  let elem = req.body;
+
+  try {
+    let publicKeyFromID = await dao.getKpubFromID_Cert(elem.serialNumber); //estraggo K_pub da id_cert
+    const signatureBytes = forge.util.hexToBytes(elem.signature_msg);//converto la stringa esadecimale della firma in Byte
+    const mdToVerify = forge.md.sha384.create();
+    mdToVerify.update(elem.msg, 'utf8');//creo digest partendo dal msg in chiaro
+    const parsedPubKey = forge.pki.publicKeyFromPem(publicKeyFromID);
+    let val = parsedPubKey.verify(mdToVerify.digest().bytes(), signatureBytes); // confronto digest con la firma
+
+    if (val === true){
+      const hashPassed = elem.hash_msg;
+      const hashCalculated = mdToVerify.digest().toHex();//confronto l'hash passato come parametro da quello calcolato dal msg
+      if (hashPassed.toLowerCase() === hashCalculated.toLowerCase())
+        dao.addAsymmElements(elem).then(() => res.status(201).end() ).catch(() => res.status(500).json({ error: `Database error while put elems into DB` }).end());
+      
+      else 
+        res.status(503).json({ error: `Check tra hash(msg) e hash_msg passato come parametro non corrisposto.` });
+      
+    }
+    else
+      res.status(503).json({ error: `Check tra hash(msg) e Dec(sign) non corrisposto.` });
+  }catch (err) {
+    res.status(503).json({ error: `Database error during the extraction of the K_pub with serial Number: ${req.body.serialNumber}.` });
+  }
+});
 
 // app.post('/api/asymm/handshake2', async(req,res) => {
   

@@ -185,3 +185,26 @@ Response body: An object which describe the serial number of the certificate.
      "serialNumber":1
 }
 ```
+
+### __Add a New Message__
+
+URL: `/api/asymm/add_elements`
+
+Method: POST
+
+Description: Add a new message to the list of the messages.
+
+Request body: An object representing a message (Content-Type: `application/json`).
+
+```
+{
+     "msg":"ciao", 
+     "serialNumber":1, 
+     "hash_msg": "6eda4fcc7685abba4345b5c30dc13885aff7359a51d1877c7c55cf305dd52fc622bcd1a8183ac2e7c7fdc1fc14c3f685", 
+     "signature_msg": "c97cffee6b0aee809aadf4875a0e4667b695b4e1715356b529142218906b0491a6d9b62e7a687250c1936d26725f4f83cde223f4de1034b4ffb08ae45043608af9c2058837920a527eb66b7065822c4c2a49a7a45e83e5065914cc85aaebb9c6b08cde40137751cbc23a4ec8f80668095da1a3804d5267c60eac4ff9a800748c218064e1924649c6efa9e825f5fb583ed667b355d07cc446ffd7dbac2d565f63f1d61605f0fb989b6622a56cccf6a67a704b78b3d1a0f567cb1cc05c2b41c7ed8444a4980883fb9729d626af87a58f60b886635661383a142ea53fd7d88c00cf92b1dc7439f22082b9f78ea782ff13b0b04f66d3155fb384f703572a03265185"
+}
+```
+
+Response: `201 Created` (success) or `503 Service Unavailable` (generic error). If the request body is not valid, `422 Unprocessable Entity` (validation error).
+
+Response body: _None_

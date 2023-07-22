@@ -185,3 +185,38 @@ exports.addCertificate = (serialNumber,kpub,cert) => {
         });
     });  
 }
+
+//ottengo il K_pub dalla serial number se esiste
+exports.getKpubFromID_Cert = (idCert) => {
+    return new Promise((resolve, reject) => {
+        const sql = 'SELECT K_pub FROM certificates WHERE id_cert = ?;';
+        db.all(sql, [idCert], (err, rows) => {
+            if (err) {
+                reject(err);
+                return;
+            }
+            let my_info;
+            if (rows.length>=1)
+                my_info = rows[0].K_pub;
+            else
+                my_info = rows.K_pub;
+            resolve(my_info);
+        });
+    });
+}
+
+// aggiungo il nuovo messaggio al DB insieme al suo id_msg, hash(msg), sign_msg, serialNumber, check
+exports.addAsymmElements = (elem) => {
+    const check = "default";
+    
+    return new Promise((resolve, reject) => {
+        const sql = "INSERT INTO Asymm_table (msg,hash_msg,serialNumber,check_msg,signature_msg) values(?,?,?,?,?);"
+        db.run(sql, [elem.msg, elem.hash_msg, elem.serialNumber, check, elem.signature_msg], function (err) {
+            if (err) {
+                reject(err);
+                return;
+            }
+            resolve(this.lastID);
+        });
+    });
+}
