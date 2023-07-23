@@ -1,6 +1,7 @@
 package com.example.uniqueiddemo;
 
 import static com.example.uniqueiddemo.MainActivity.iccid;
+import static com.example.uniqueiddemo.MainActivity.keyPair;
 
 import android.media.MediaDrm;
 import android.media.UnsupportedSchemeException;
@@ -21,7 +22,6 @@ import java.util.UUID;
 
 public class AsymmHandshakeHandler {
 
-    static KeyPair keyPair;
     private static MediaDrm wvDrm;
     private static final UUID WIDEVINE_UUID = new UUID(-0x121074568629b532L, -0x5c37d8232ae2de13L);
 
@@ -47,7 +47,7 @@ public class AsymmHandshakeHandler {
             try {
                 // cannot use hash for the q prime, since it contains letters. So we remove them
                 String drmid_hash = byteArrayToHexString(sha256(wvDrm.getPropertyByteArray(MediaDrm.PROPERTY_DEVICE_UNIQUE_ID)));
-                tmp_q = new BigInteger(drmid_hash.replaceAll("([a-z])", ""));   // using a reduction function like in rainbow tables
+                tmp_q = new BigInteger(drmid_hash.replaceAll("([a-z])", ""));
                 System.out.println("DRM_ID: " + byteArrayToHexString(wvDrm.getPropertyByteArray(MediaDrm.PROPERTY_DEVICE_UNIQUE_ID)));
                 System.out.println("DRM_ID Hash: " + drmid_hash);
                 System.out.println("DRM_ID Hash w/o letters: " + drmid_hash.replaceAll("([a-z])", ""));
@@ -59,15 +59,21 @@ public class AsymmHandshakeHandler {
         }
 
         System.out.println("tmp_q before shift: " + tmp_q);
+        System.out.println("tmp_p before shift: " + tmp_p);
         tmp_p = tmp_p.shiftLeft(bitTargetLength - tmp_p.bitLength());
         tmp_q = tmp_q.shiftLeft(bitTargetLength - tmp_q.bitLength());
         System.out.println("tmp_q after shift: " + tmp_q);
+        System.out.println("tmp_p after shift: " + tmp_p);
 
         BigInteger q = tmp_q.nextProbablePrime();
         BigInteger p = tmp_p.nextProbablePrime();
+        System.out.println("p prime is: " + p);
+        System.out.println("q prime is: " + q);
 
         BigInteger N = p.multiply(q);
         System.out.println("N is " + N.bitLength() + " bit long");
+        System.out.println("N is " + N);
+        System.out.println("N is " + ConversionUtil.bytesToHex(N.toByteArray()));
         BigInteger phi = (p.subtract(BigInteger.ONE)).multiply(q.subtract(BigInteger.ONE));
         BigInteger publicExponent = new BigInteger("65537");
         System.out.println("Public exponent of value " + publicExponent + " is " + (
@@ -100,7 +106,7 @@ public class AsymmHandshakeHandler {
         String plaintext = "Firmina";
         try {
             // sign
-            String algo = "SHA256withRSA";
+            String algo = "SHA384withRSA";
             Signature signature = Signature.getInstance(algo);
             signature.initSign((PrivateKey) keyPair.getPrivate());
             signature.update(plaintext.getBytes("UTF-8"));
@@ -117,8 +123,6 @@ public class AsymmHandshakeHandler {
             System.out.println(e.toString());
             throw new RuntimeException(e);
         }
-
-
     }
 
     public static boolean areCoprime(BigInteger m, BigInteger t) {
@@ -138,9 +142,8 @@ public class AsymmHandshakeHandler {
         return buffer.toString();
     }
 
-    // TODO: Change sha-1 to sha-256
     public static byte[] sha256(byte[] input) throws NoSuchAlgorithmException {
-        MessageDigest md = MessageDigest.getInstance("SHA-1");
+        MessageDigest md = MessageDigest.getInstance("SHA-256");
         md.update(input);
         return md.digest();
     }

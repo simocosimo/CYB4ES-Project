@@ -13,6 +13,7 @@ import androidx.fragment.app.FragmentTransaction;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -22,12 +23,20 @@ import android.widget.Toast;
 
 import com.example.uniqueiddemo.databinding.ActivityMainBinding;
 
+import java.io.StringWriter;
+import java.security.KeyPair;
+import java.security.PublicKey;
+import java.util.Base64;
 import java.util.Iterator;
 
 public class MainActivity extends AppCompatActivity {
 
     ActivityMainBinding binding;
     static String iccid;
+    static KeyPair keyPair;
+    static String sharedPrefName = "com.example.uniqueiddemo.asymm";
+
+    static int serialNumber;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,6 +56,17 @@ public class MainActivity extends AppCompatActivity {
             iccid = phoneAccountHandle.getId().substring(0, 19);
         } else if (Build.VERSION.SDK_INT > 30){
             iccid = null;
+        }
+
+        Context context = this;
+        SharedPreferences sharedPref = context.getSharedPreferences(sharedPrefName, Context.MODE_PRIVATE);
+        serialNumber = sharedPref.getInt("serialNumber", -1);
+        if(serialNumber == -1) {
+            // We do not have a serialNumber, so start handshake phase
+            AsymmHandshakeHandler.keyGen();
+//            String pubpem = publicKeyToPEM((PublicKey) keyPair.getPublic());
+//            System.out.println("PEM format pk: " + pubpem);
+            System.out.println("pubk: "+ keyPair.getPublic().toString());
         }
 
         binding = ActivityMainBinding.inflate(getLayoutInflater());
@@ -92,6 +112,14 @@ public class MainActivity extends AppCompatActivity {
             // other 'case' lines to check for other
             // permissions this app might request
         }
+    }
+
+    private String publicKeyToPEM(PublicKey pubKey) {
+        String pk = Base64.getEncoder().encodeToString(pubKey.getEncoded());
+        String begin = "-----BEGIN PUBLIC KEY----- ";
+        String end = " -----END PUBLIC KEY-----";
+//        return (begin + pk.replaceAll("(.{64})", "$1\n") + end);
+        return (begin + pk + end);
     }
 
     private void replaceFragment(Fragment fragment){

@@ -97,7 +97,7 @@ public class AuthenticationFragment extends Fragment {
                 Toast.makeText(authView.getContext(), type.getText() + " chosen", Toast.LENGTH_SHORT).show();
                 // Generate the keypair, for now just for looking at the logs and see if they're the same
                 // every time the asymm option is selected
-                AsymmHandshakeHandler.keyGen();
+                // AsymmHandshakeHandler.keyGen();
             }
 
 
