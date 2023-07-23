@@ -255,7 +255,7 @@ exports.updateCheckAsymm = (elem) => {
 			if (my_info1.length > 0 && my_info1[0].signature_msg === elem.signature_msg) {
 				const check = "ok";
 				const sql2 = 'UPDATE Asymm_table SET check_msg=? WHERE id_msg = ?;';
-				db.run(sql2, [check, elem.id], function (err) {
+				db.run(sql2, [check, elem.id_msg], function (err) {
 					if (err) {
 						reject(err);
 						return;
@@ -270,11 +270,12 @@ exports.updateCheckAsymm = (elem) => {
         const extract = (elem) => {
             const check = "ok";
             const sql3 = 'SELECT id_msg, msg, signature_msg FROM Asymm_table WHERE check_msg = ? AND id_msg= ?;';
-            db.all(sql3, [check, elem.id], (err, rows) => {
+            db.all(sql3, [check, elem.id_msg], (err, rows) => {
                 if (err) {
                     reject(err);
                     return;
-                }const my_info = rows.map((es) => ({ id_msg: es.id_msg, msg: es.msg, signature_msg: es.signature_msg }));
+                }
+                const my_info = rows.map((es) => ({ id_msg: es.id_msg, msg: es.msg, signature_msg: es.signature_msg }));
                 resolve(my_info[0]);
             });
         };
