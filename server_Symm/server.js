@@ -220,7 +220,7 @@ app.post('/api/asymm/handshake', async(req,res) => {
 })
 
 
-//inserisco nel DB msg, id_msg, signature_msg, hash_msg, serialNumber e check
+//inserisco nel DB msg, id_msg, signature_msg, serialNumber e check
 // POST /api/asymm/add_esements
 app.post('/api/asymm/add_elements', async (req, res) => {
 
@@ -228,22 +228,18 @@ app.post('/api/asymm/add_elements', async (req, res) => {
 
   try {
     let publicKeyFromID = await dao.getKpubFromID_Cert(elem.serialNumber); //estraggo K_pub da id_cert
+   
     const signatureBytes = forge.util.hexToBytes(elem.signature_msg);//converto la stringa esadecimale della firma in Byte
+    
     const mdToVerify = forge.md.sha384.create();
     mdToVerify.update(elem.msg, 'utf8');//creo digest partendo dal msg in chiaro
+    
     const parsedPubKey = forge.pki.publicKeyFromPem(publicKeyFromID);
     let val = parsedPubKey.verify(mdToVerify.digest().bytes(), signatureBytes); // confronto digest con la firma
-
-    if (val === true){
-      const hashPassed = elem.hash_msg;
-      const hashCalculated = mdToVerify.digest().toHex();//confronto l'hash passato come parametro da quello calcolato dal msg
-      if (hashPassed.toLowerCase() === hashCalculated.toLowerCase())
-        dao.addAsymmElements(elem).then(() => res.status(201).end() ).catch(() => res.status(500).json({ error: `Database error while put elems into DB` }).end());
+    const hashCalculated = mdToVerify.digest().toHex();
+    if (val === true)
+      dao.addAsymmElements(elem,hashCalculated).then(() => res.status(201).end() ).catch(() => res.status(500).json({ error: `Database error while put elems into DB` }).end());
       
-      else 
-        res.status(503).json({ error: `Check tra hash(msg) e hash_msg passato come parametro non corrisposto.` });
-      
-    }
     else
       res.status(503).json({ error: `Check tra hash(msg) e Dec(sign) non corrisposto.` });
   }catch (err) {
@@ -251,10 +247,10 @@ app.post('/api/asymm/add_elements', async (req, res) => {
   }
 });
 
-// GET /api/asymm/verify/:serialNumber
-app.get('/api/asymm/verify/:serialNumber', async (req, res) => {
+// GET /api/asymm/verify
+app.get('/api/asymm/verify', async (req, res) => {
   try {
-      let listMsg = await dao.getMsgW4V(req.params.serialNumber);
+      let listMsg = await dao.getMsgW4V();
       res.status(201).json(listMsg).end();
   } catch (err) {
       res.status(503).json({ error: `Database error during the search of msg in w4v .` }).end();
@@ -271,7 +267,8 @@ app.put('/api/asymm/updateCheck', async (req, res) => {
           promiseMsg.push(dao.updateCheckAsymm(elem));
       }
       const results = await Promise.all(promiseMsg);
-      res.status(201).json(results).end();
+      const vett2 = results.filter((elem) => elem.id_msg > 0);
+      res.status(201).json(vett2).end();
   } catch (err) {
       res.status(503).json({ error: `Database error during the update check.` }).end();
   }

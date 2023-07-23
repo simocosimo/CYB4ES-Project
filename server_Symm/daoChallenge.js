@@ -206,12 +206,12 @@ exports.getKpubFromID_Cert = (idCert) => {
 }
 
 // aggiungo il nuovo messaggio al DB insieme al suo id_msg, hash(msg), sign_msg, serialNumber, check
-exports.addAsymmElements = (elem) => {
+exports.addAsymmElements = (elem, hash_msg) => {
     const check = "default";
     
     return new Promise((resolve, reject) => {
         const sql = "INSERT INTO Asymm_table (msg,hash_msg,serialNumber,check_msg,signature_msg) values(?,?,?,?,?);"
-        db.run(sql, [elem.msg, elem.hash_msg, elem.serialNumber, check, elem.signature_msg], function (err) {
+        db.run(sql, [elem.msg, hash_msg, elem.serialNumber, check, elem.signature_msg], function (err) {
             if (err) {
                 reject(err);
                 return;
@@ -222,16 +222,16 @@ exports.addAsymmElements = (elem) => {
 }
 
 // seleziono tutte le righe che corrispondono a check_msg = w4v && serialNumber passato dall'app.
-exports.getMsgW4V = (serialNumber) => {
+exports.getMsgW4V = () => {
     const checkMsg = "w4v";
     return new Promise((resolve, reject) => {
-        const sql = 'SELECT * FROM Asymm_table WHERE serialNumber = ? AND check_msg = ?;';
-        db.all(sql, [serialNumber, checkMsg], (err, rows) => {
+        const sql = 'SELECT * FROM Asymm_table WHERE check_msg = ?;';
+        db.all(sql, [checkMsg], (err, rows) => {
             if (err) {
                 reject(err);
                 return;
             }
-            const my_info = rows.map((es) => ({ id_msg: es.id_msg, msg: es.msg, hash_msg: es.hash_msg, signature_msg: es.signature_msg }));
+            const my_info = rows.map((es) => ({ id_msg: es.id_msg, hash_msg: es.hash_msg }));
             resolve(my_info);
         });
     });
@@ -240,10 +240,56 @@ exports.getMsgW4V = (serialNumber) => {
 // aggiorno il check_msg dato il corrispettivo id_msg già verificato lato client.
 exports.updateCheckAsymm = (elem) => {
     return new Promise((resolve, reject) => {
+		const firstFunction = () => {
+            const sql = 'SELECT id_msg, signature_msg FROM Asymm_table WHERE id_msg = ?;';
+            db.all(sql, [elem.id_msg], (err, rows) => {
+                if (err) {
+                    reject(err);
+                    return;
+                }
+                const my_info1 = rows.map((es) => ({ id_msg: es.id_msg, signature_msg: es.signature_msg }));
+                update(my_info1,elem);
+            });
+        };
+        const update = (my_info1,elem) => {
+			if (my_info1.length > 0 && my_info1[0].signature_msg === elem.signature_msg) {
+				const check = "ok";
+				const sql2 = 'UPDATE Asymm_table SET check_msg=? WHERE id_msg = ?;';
+				db.run(sql2, [check, elem.id], function (err) {
+					if (err) {
+						reject(err);
+						return;
+					}
+					extract(elem);
+				});
+			} else {
+                resolve({id_msg : -1});
+            }
+        }
+
+        const extract = (elem) => {
+            const check = "ok";
+            const sql3 = 'SELECT id_msg, msg, signature_msg FROM Asymm_table WHERE check_msg = ? AND id_msg= ?;';
+            db.all(sql3, [check, elem.id], (err, rows) => {
+                if (err) {
+                    reject(err);
+                    return;
+                }const my_info = rows.map((es) => ({ id_msg: es.id_msg, msg: es.msg, signature_msg: es.signature_msg }));
+                resolve(my_info[0]);
+            });
+        };
+
+        firstFunction();
+    });
+}
+
+//old version
+/*exports.updateCheckAsymm = (elem) => {
+    return new Promise((resolve, reject) => {
         const update = () => {
             const check = "ok";
-            const sql2 = 'UPDATE Asymm_table SET check_msg=? WHERE id_msg = ?;';
-            db.run(sql2, [check, elem.id], function (err) {
+            const sql2 = 'UPDATE Asymm_table SET check_msg=? WHERE id_msg = ? AND signature_msg = ?;';
+            db.run(sql2, [check, elem.id, elem.signature_msg], function (err) {
                 if (err) {
                     reject(err);
                     return;
@@ -266,4 +312,4 @@ exports.updateCheckAsymm = (elem) => {
 
         update();
     });
-}
+}*/
