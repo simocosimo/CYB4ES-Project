@@ -283,34 +283,3 @@ exports.updateCheckAsymm = (elem) => {
         firstFunction();
     });
 }
-
-//old version
-/*exports.updateCheckAsymm = (elem) => {
-    return new Promise((resolve, reject) => {
-        const update = () => {
-            const check = "ok";
-            const sql2 = 'UPDATE Asymm_table SET check_msg=? WHERE id_msg = ? AND signature_msg = ?;';
-            db.run(sql2, [check, elem.id, elem.signature_msg], function (err) {
-                if (err) {
-                    reject(err);
-                    return;
-                }
-                extract(elem);
-            });
-        }
-
-        const extract = (elem) => {
-            const check = "ok";
-            const sql3 = 'SELECT id_msg, msg, signature_msg FROM Asymm_table WHERE check_msg = ? AND id_msg= ?;';
-            db.all(sql3, [check, elem.id], (err, rows) => {
-                if (err) {
-                    reject(err);
-                    return;
-                }const my_info = rows.map((es) => ({ id_msg: es.id_msg, msg: es.msg, signature_msg: es.signature_msg }));
-                resolve(my_info[0]);
-            });
-        };
-
-        update();
-    });
-}*/
