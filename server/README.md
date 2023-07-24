@@ -9,6 +9,41 @@ Team members:
 
 To start the server, after cloning the repository from git you need to install the packages with the command `npm i`, then the server will be ready to be run with the command `node server.js`.
 
+## Tables for Symmetric Encryption
+
+Name table = Collection
+
+| Column       | Type         | Description                  |
+|--------------|--------------|------------------------------|
+| IDmsg        | Integer      | UID                          |
+| HMACmsg      | Text         | HMAC of the message          |
+| message      | Text         | message                      |
+| salt         | Text         | salt                         |
+| checkMsg     | Text         | status of the message        |
+| DRM          | Text         | DRM ID                       |
+| ICCID        | Text         | ICCID                        |
+
+## Tables for Asymmetric Encryption
+
+Name table = certificates
+
+| Column        | Type         | Description                                              |
+|---------------|--------------|----------------------------------------------------------|
+| K_pub         | Text         | the public key of a device in .pem format                |
+| cert          | Text         | the certificate signed with priv_key of the server       |
+| id_cer        | Integer      | the serialNumber associated with the certificate & K_pub |
+
+Name table = Asymm_table
+
+| Column        | Type         | Description                                        |
+|---------------|--------------|----------------------------------------------------|
+| id_msg        | Integer      | UID                                                |
+| signature_msg | Text         | signature of the message                           |
+| msg           | Text         | message                                            |
+| hash_msg      | Text         | hash of te message                                 |
+| check_msg     | Text         | status of the message                              |
+| serialNumber  | Text         | serialNumber associated to a K_pub & a signed Cert |
+
 ## List of APIs offered by the server
 
 Provide a short description of the API you designed, with the required parameters. Please follow the proposed structure.
