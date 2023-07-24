@@ -1,7 +1,12 @@
 package com.example.uniqueiddemo;
 
 import static com.example.uniqueiddemo.MainActivity.iccid;
+import static com.example.uniqueiddemo.MainActivity.needToHandshake;
+import static com.example.uniqueiddemo.MainActivity.serialNumber;
+import static com.example.uniqueiddemo.MainActivity.sharedPrefName;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.media.UnsupportedSchemeException;
 import android.os.Build;
 import android.os.Bundle;
@@ -21,6 +26,9 @@ import android.widget.Switch;
 import android.widget.Toast;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 import java.io.IOException;
 import java.security.InvalidKeyException;
@@ -90,16 +98,44 @@ public class AuthenticationFragment extends Fragment {
         enc.setOnCheckedChangeListener((radioGroup, i) -> {
 
             if (i == R.id.radio_symm){
+                auth.setEnabled(true);
                 type = authView.findViewById(i);
                 Toast.makeText(authView.getContext(), type.getText() + " chosen", Toast.LENGTH_SHORT).show();
             }else if (i == R.id.radio_asymm){
                 type = authView.findViewById(i);
-                Toast.makeText(authView.getContext(), type.getText() + " chosen", Toast.LENGTH_SHORT).show();
-                // Generate the keypair, for now just for looking at the logs and see if they're the same
-                // every time the asymm option is selected
-                // AsymmHandshakeHandler.keyGen();
+                if(needToHandshake) {
+                    auth.setEnabled(false);
+                    Toast.makeText(authView.getContext(), type.getText() + " chosen, handshake in progress", Toast.LENGTH_SHORT).show();
+                    // Perform handhsake
+                    AsymmHandshakeProcess ap = new AsymmHandshakeProcess(authView);
+                    try {
+                        netThread = new Thread(ap);
+                        netThread.start();
+                        netThread.join();
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                    int code = ap.getCode();
+                    if(code == 0) {
+                        Toast.makeText(getContext(),"Please fill IP field for handshake phase",Toast.LENGTH_SHORT).show();
+                    }
+                    if(code == 201) {
+                        Toast.makeText(getContext(),"Handshake completed",Toast.LENGTH_SHORT).show();
+                        JsonObject resjson = JsonParser.parseString(ap.getBody()).getAsJsonObject();
+                        int sn = resjson.get("serialNumber").getAsInt();
+                        System.out.println("Serial number is: " + sn);
+                        // save the serialnumber into shared prefs and static value
+                        serialNumber = sn;
+                        SharedPreferences sharedpref = this.getActivity().getSharedPreferences(sharedPrefName, Context.MODE_PRIVATE);
+                        SharedPreferences.Editor sharededitor = sharedpref.edit();
+                        sharededitor.putInt("serialNumber", sn);
+                        sharededitor.apply();
+                        auth.setEnabled(true);
+                    }
+                } else {
+                    Toast.makeText(authView.getContext(), type.getText() + " chosen", Toast.LENGTH_SHORT).show();
+                }
             }
-
 
         });
         auth.setOnClickListener(new View.OnClickListener() {
