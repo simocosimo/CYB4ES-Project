@@ -19,6 +19,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.Signature;
+import java.security.spec.InvalidKeySpecException;
 import java.security.spec.RSAPrivateKeySpec;
 import java.security.spec.RSAPublicKeySpec;
 import java.util.Base64;
@@ -77,7 +78,7 @@ public class AsymmHandshakeHandler {
             try {
                 String drmhash_numberonly = ConversionUtil.bytesToHex(drmidvalue).replaceAll("([a-z])", "");
                 for(int i = 0; i < reps; i++) {
-                    bighash_q += ConversionUtil.bytesToHex(sha512(ConversionUtil.hexStringToByteArray(drmhash_numberonly)));
+                    bighash_q += ConversionUtil.bytesToHex(sha512(drmhash_numberonly.getBytes()));
                 }
 //                tmp_q = new BigInteger(ConversionUtil.hexStringToByteArray(drmid_hash));
 //                System.out.println("DRM_ID: " + byteArrayToHexString(wvDrm.getPropertyByteArray(MediaDrm.PROPERTY_DEVICE_UNIQUE_ID)));
@@ -109,50 +110,43 @@ public class AsymmHandshakeHandler {
         BigInteger privateExponent = publicExponent.modInverse(phi);
 
         try {
-            RSAPublicKeySpec spec = new RSAPublicKeySpec(N, publicExponent);
-            RSAPrivateKeySpec privateSpec = new RSAPrivateKeySpec(N, privateExponent);
-
-            KeyFactory factory = KeyFactory.getInstance("RSA");
-
-            PublicKey pub = factory.generatePublic(spec);
-            PrivateKey priv = factory.generatePrivate(privateSpec);
-
-            byte[] encodedPub = pub.getEncoded();
-            System.out.println("Public Key: " + keyToString(encodedPub));
+            saveKeyPair(N, publicExponent, privateExponent);
+//            byte[] encodedPub = pub.getEncoded();
+//            System.out.println("Public Key: " + keyToString(encodedPub));
 
             // This does not work, but public key is the same everytime, so this should be too
 //            byte[] encodedPriv = priv.getEncoded();
 //            System.out.println("Private Key: " + keyToString(encodedPriv));
-            keyPair = new KeyPair(pub, priv);
             modulus = ConversionUtil.bytesToHex(N.toByteArray());
             pubExponent = ConversionUtil.bytesToHex(publicExponent.toByteArray());
             privExponent = ConversionUtil.bytesToHex(privateExponent.toByteArray());
         } catch (Exception e) {
-            System.out.println(e.toString());
             throw new RuntimeException(e);
         }
+    }
 
-        // test signature
-//        String plaintext = "Firmina";
-//        try {
-//            // sign
-//            String algo = "SHA384withRSA";
-//            Signature signature = Signature.getInstance(algo);
-//            signature.initSign((PrivateKey) keyPair.getPrivate());
-//            signature.update(plaintext.getBytes("UTF-8"));
-//            byte[] rsa_text = signature.sign();
-//            System.out.println("Siganture is: " + byteArrayToHexString(rsa_text));
-//
-//            // verify
-//            Signature verify = Signature.getInstance(algo);
-//            verify.initVerify((PublicKey) keyPair.getPublic());
-//            verify.update(plaintext.getBytes("UTF-8"));
-//            boolean valid = verify.verify(rsa_text);
-//            System.out.println("Siganture is " + (valid ? "" : "NOT ") + "valid.");
-//        } catch (Exception e) {
-//            System.out.println(e.toString());
-//            throw new RuntimeException(e);
-//        }
+    public static String signMessage(String plaintext) {
+        try {
+            // sign
+            String algo = "SHA384withRSA";
+            Signature signature = Signature.getInstance(algo);
+            signature.initSign((PrivateKey) keyPair.getPrivate());
+            signature.update(plaintext.getBytes("UTF-8"));
+            byte[] rsa_text = signature.sign();
+            return ConversionUtil.bytesToHex(rsa_text);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static void saveKeyPair(BigInteger n, BigInteger pubexp, BigInteger privexp) throws NoSuchAlgorithmException, InvalidKeySpecException {
+        RSAPublicKeySpec spec = new RSAPublicKeySpec(n, pubexp);
+        RSAPrivateKeySpec privateSpec = new RSAPrivateKeySpec(n, privexp);
+
+        KeyFactory factory = KeyFactory.getInstance("RSA");
+        PublicKey pub = factory.generatePublic(spec);
+        PrivateKey priv = factory.generatePrivate(privateSpec);
+        keyPair = new KeyPair(pub, priv);
     }
 
     public static boolean areCoprime(BigInteger m, BigInteger t) {

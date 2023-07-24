@@ -118,6 +118,8 @@ public class AuthenticationFragment extends Fragment {
                     int code = ap.getCode();
                     if(code == 0) {
                         Toast.makeText(getContext(),"Please fill IP field for handshake phase",Toast.LENGTH_SHORT).show();
+                        RadioButton sy = authView.findViewById(R.id.radio_symm);
+                        sy.setChecked(true);
                     }
                     if(code == 201) {
                         Toast.makeText(getContext(),"Handshake completed",Toast.LENGTH_SHORT).show();
@@ -166,9 +168,27 @@ public class AuthenticationFragment extends Fragment {
                         Toast.makeText(getContext(),"Somethig went wrong: error code " + code, Toast.LENGTH_SHORT).show();
                     }
                 } else if (type.getId() == R.id.radio_asymm) {
-                    Toast.makeText(getContext(),"Not implemented", Toast.LENGTH_SHORT).show();
+                    AsymmMessageProcess asymmMessageProcess = new AsymmMessageProcess(authView);
+                    try {
+                        netThread = new Thread(asymmMessageProcess);
+                        netThread.start();
+                        netThread.join();
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                    int code = asymmMessageProcess.getCode();
+                    if(code == 0){
+                        Toast.makeText(getContext(),"Please fill both input fields",Toast.LENGTH_SHORT).show();
+                    }
+                    else if (code == 201){
+                        Toast.makeText(getContext(),"Message sent correctly",Toast.LENGTH_SHORT).show();
+                    }
+                    else if (code == 503){
+                        Toast.makeText(getContext(),"Server signal wrong signature",Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(getContext(),"Somethig went wrong: error code " + code, Toast.LENGTH_SHORT).show();
+                    }
                 }
-
             }
         });
         return authView;

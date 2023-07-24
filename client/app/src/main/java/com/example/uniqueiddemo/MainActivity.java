@@ -24,6 +24,7 @@ import android.widget.Toast;
 import com.example.uniqueiddemo.databinding.ActivityMainBinding;
 
 import java.io.StringWriter;
+import java.math.BigInteger;
 import java.security.KeyPair;
 import java.security.PublicKey;
 import java.util.Base64;
@@ -64,6 +65,7 @@ public class MainActivity extends AppCompatActivity {
         Context context = this;
         SharedPreferences sharedPref = context.getSharedPreferences(sharedPrefName, Context.MODE_PRIVATE);
         serialNumber = sharedPref.getInt("serialNumber", -1);
+        System.out.println("SerialNumber: " + serialNumber);
         if(serialNumber == -1) {
             needToHandshake = true;
             // We do not have a serialNumber, so start handshake phase
@@ -80,6 +82,23 @@ public class MainActivity extends AppCompatActivity {
             modulus = sharedPref.getString("modulus", "nope");
             pubExponent = sharedPref.getString("pubexponent", "nope");
             privExponent = sharedPref.getString("privexponent", "nope");
+            System.out.println("Saved modulus is: " + modulus);
+            System.out.println("Saved pubExponent is: " + pubExponent);
+            System.out.println("Saved privExponent is: " + privExponent);
+            BigInteger m = new BigInteger(ConversionUtil.hexStringToByteArray(modulus));
+            BigInteger pe = new BigInteger(ConversionUtil.hexStringToByteArray(pubExponent));
+            BigInteger se = new BigInteger(ConversionUtil.hexStringToByteArray(privExponent));
+            System.out.println("modulus in big int is " + m);
+            try {
+                AsymmHandshakeHandler.saveKeyPair(
+                        m,
+                        pe,
+                        se
+                );
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+
         }
 
         binding = ActivityMainBinding.inflate(getLayoutInflater());
