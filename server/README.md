@@ -54,7 +54,7 @@ Provide a short description of the API you designed, with the required parameter
 * [A (small) sample response, with body (if any)]
 * [Error responses, if any]
 
-## APIs Symmetric Ecryption
+## APIs Symmetric Encryption
 Hereafter, we report the designed HTTP APIs, also implemented in the project.
 
 ### __List of entry on the DB__
@@ -192,7 +192,7 @@ Response: `204 No Content` (success) or `503 Service Unavailable` (generic error
 Response body: _None_
 
 
-## APIs Asymmetric Ecryption
+## APIs Asymmetric Encryption
 Hereafter, we report the designed HTTP APIs, also implemented in the project.
 
 ### __Handshake phase__
