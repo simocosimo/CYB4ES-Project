@@ -98,15 +98,21 @@ app.delete('/api/delete/:userID',async (req, res) => {
 //POST /api/asymm/handshake
 app.post('/api/asymm/handshake', async(req,res) => {
 
+   var n = req.body.n;
+   var e = req.body.e;
+   var keypub = forge.rsa.setPublicKey(n,e);
+   console.log(keypub);
+   var pempubkey = forge.pki.publicKeyToPem(keypub);
+
     let serialNumber= -1;
     try{
-      serialNumber = await dao.getIDCertFromKpub(req.body.kpub);
+      serialNumber = await dao.getIDCertFromKpub(pempubkey);
       if (serialNumber == 0){
         let newSerialNumber;
         try{
           newSerialNumber = await dao.getIDCert();
           let cert = forge.pki.createCertificate();
-          cert.publicKey = forge.pki.publicKeyFromPem(req.body.kpub); //public key device
+          cert.publicKey = forge.pki.publicKeyFromPem(pempubkey); //public key device
           cert.serialNumber = newSerialNumber;
           cert.validity.notBefore = new Date();
           cert.validity.notAfter = new Date();
@@ -183,7 +189,7 @@ app.post('/api/asymm/handshake', async(req,res) => {
               
           //save serialNumber, cert, Kpub into the database
           try {
-            await dao.addCertificate(newSerialNumber,req.body.kpub,pem.certificate);
+            await dao.addCertificate(newSerialNumber,pempubkey,pem.certificate);
             const ObjSerialNum = {serialNumber : newSerialNumber};
             res.status(201).json(ObjSerialNum).end(); 
         } catch (err) {
@@ -208,7 +214,7 @@ app.post('/api/asymm/handshake', async(req,res) => {
           //   res.status(501).json({error: 'Errore durante la verifica del certificato'}).end();
           // }
         }catch (err){
-          res.status(503).json({ error: `Database error during the extraction of the max serial number.` });
+          res.status(503).json({ error: `Database error during the extraction of the max serial number. ${err}` });
         }
       }
       else{

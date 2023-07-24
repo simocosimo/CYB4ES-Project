@@ -2,7 +2,11 @@ package com.example.uniqueiddemo;
 
 import static com.example.uniqueiddemo.MainActivity.iccid;
 import static com.example.uniqueiddemo.MainActivity.keyPair;
+import static com.example.uniqueiddemo.MainActivity.modulus;
+import static com.example.uniqueiddemo.MainActivity.privExponent;
+import static com.example.uniqueiddemo.MainActivity.pubExponent;
 
+import android.icu.text.SymbolTable;
 import android.media.MediaDrm;
 import android.media.UnsupportedSchemeException;
 import android.os.Build;
@@ -34,39 +38,62 @@ public class AsymmHandshakeHandler {
             throw new RuntimeException(e);
         }
 
+        byte[] drmidvalue = wvDrm.getPropertyByteArray(MediaDrm.PROPERTY_DEVICE_UNIQUE_ID);
+
         // p = drm id
         // q = iccid if low android version, otherwise hash of drm id
-        int bitTargetLength = 1024;
-        BigInteger tmp_p = new BigInteger(wvDrm.getPropertyByteArray(MediaDrm.PROPERTY_DEVICE_UNIQUE_ID));
-        BigInteger tmp_q;
+        int reps = 2;
+//        BigInteger tmp_p = new BigInteger(wvDrm.getPropertyByteArray(MediaDrm.PROPERTY_DEVICE_UNIQUE_ID));
+        BigInteger p;
+        BigInteger q;
+        String bighash_p = "";
+        String bighash_q = "";
+
+        try {
+            for(int i = 0; i < reps; i++) {
+                bighash_p += ConversionUtil.bytesToHex(sha512(drmidvalue));
+            }
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+
+        System.out.println("bighash(hex len " + bighash_p.length() +  ") is " + bighash_p);
+        p = new BigInteger(ConversionUtil.hexStringToByteArray(bighash_p));
+//        tmp_q = new BigInteger(ConversionUtil.hexStringToByteArray(bighash_q));
+
 
         if (Build.VERSION.SDK_INT <= 30) {
-            System.out.println("Setting tmp_q to iccid value: " + iccid);
-            tmp_q = new BigInteger(iccid);
-        } else {
+            System.out.println("Setting tmp_q to iccid value hashed");
             try {
-                // cannot use hash for the q prime, since it contains letters. So we remove them
-                String drmid_hash = byteArrayToHexString(sha256(wvDrm.getPropertyByteArray(MediaDrm.PROPERTY_DEVICE_UNIQUE_ID)));
-                tmp_q = new BigInteger(drmid_hash.replaceAll("([a-z])", ""));
-                System.out.println("DRM_ID: " + byteArrayToHexString(wvDrm.getPropertyByteArray(MediaDrm.PROPERTY_DEVICE_UNIQUE_ID)));
-                System.out.println("DRM_ID Hash: " + drmid_hash);
-                System.out.println("DRM_ID Hash w/o letters: " + drmid_hash.replaceAll("([a-z])", ""));
+                for(int i = 0; i < reps; i++) {
+                    bighash_q += ConversionUtil.bytesToHex(sha512(iccid.getBytes()));
+                }
             } catch (Exception e) {
-                System.out.println("Setting tmp_q to 1 because of hash error");
-                tmp_q = new BigInteger("1");
+                throw new RuntimeException(e);
+            }
+//            tmp_q = new BigInteger(iccid);
+        } else {
+            System.out.println("Cannot use iccid, using number only hashed drmid");
+            try {
+                String drmhash_numberonly = ConversionUtil.bytesToHex(drmidvalue).replaceAll("([a-z])", "");
+                for(int i = 0; i < reps; i++) {
+                    bighash_q += ConversionUtil.bytesToHex(sha512(ConversionUtil.hexStringToByteArray(drmhash_numberonly)));
+                }
+//                tmp_q = new BigInteger(ConversionUtil.hexStringToByteArray(drmid_hash));
+//                System.out.println("DRM_ID: " + byteArrayToHexString(wvDrm.getPropertyByteArray(MediaDrm.PROPERTY_DEVICE_UNIQUE_ID)));
+//                System.out.println("DRM_ID Hash: " + drmid_hash);
+//                System.out.println("DRM_ID Hash w/o letters: " + drmid_hash.replaceAll("([a-z])", ""));
+            } catch (Exception e) {
+                throw new RuntimeException(e);
             }
 
         }
 
-        System.out.println("tmp_q before shift: " + tmp_q);
-        System.out.println("tmp_p before shift: " + tmp_p);
-        tmp_p = tmp_p.shiftLeft(bitTargetLength - tmp_p.bitLength());
-        tmp_q = tmp_q.shiftLeft(bitTargetLength - tmp_q.bitLength());
-        System.out.println("tmp_q after shift: " + tmp_q);
-        System.out.println("tmp_p after shift: " + tmp_p);
+        System.out.println("bighash q: " + bighash_q);
+        q = new BigInteger(ConversionUtil.hexStringToByteArray(bighash_q));
 
-        BigInteger q = tmp_q.nextProbablePrime();
-        BigInteger p = tmp_p.nextProbablePrime();
+        q = q.nextProbablePrime();
+        p = p.nextProbablePrime();
         System.out.println("p prime is: " + p);
         System.out.println("q prime is: " + q);
 
@@ -97,32 +124,35 @@ public class AsymmHandshakeHandler {
 //            byte[] encodedPriv = priv.getEncoded();
 //            System.out.println("Private Key: " + keyToString(encodedPriv));
             keyPair = new KeyPair(pub, priv);
+            modulus = ConversionUtil.bytesToHex(N.toByteArray());
+            pubExponent = ConversionUtil.bytesToHex(publicExponent.toByteArray());
+            privExponent = ConversionUtil.bytesToHex(privateExponent.toByteArray());
         } catch (Exception e) {
             System.out.println(e.toString());
             throw new RuntimeException(e);
         }
 
         // test signature
-        String plaintext = "Firmina";
-        try {
-            // sign
-            String algo = "SHA384withRSA";
-            Signature signature = Signature.getInstance(algo);
-            signature.initSign((PrivateKey) keyPair.getPrivate());
-            signature.update(plaintext.getBytes("UTF-8"));
-            byte[] rsa_text = signature.sign();
-            System.out.println("Siganture is: " + byteArrayToHexString(rsa_text));
-
-            // verify
-            Signature verify = Signature.getInstance(algo);
-            verify.initVerify((PublicKey) keyPair.getPublic());
-            verify.update(plaintext.getBytes("UTF-8"));
-            boolean valid = verify.verify(rsa_text);
-            System.out.println("Siganture is " + (valid ? "" : "NOT ") + "valid.");
-        } catch (Exception e) {
-            System.out.println(e.toString());
-            throw new RuntimeException(e);
-        }
+//        String plaintext = "Firmina";
+//        try {
+//            // sign
+//            String algo = "SHA384withRSA";
+//            Signature signature = Signature.getInstance(algo);
+//            signature.initSign((PrivateKey) keyPair.getPrivate());
+//            signature.update(plaintext.getBytes("UTF-8"));
+//            byte[] rsa_text = signature.sign();
+//            System.out.println("Siganture is: " + byteArrayToHexString(rsa_text));
+//
+//            // verify
+//            Signature verify = Signature.getInstance(algo);
+//            verify.initVerify((PublicKey) keyPair.getPublic());
+//            verify.update(plaintext.getBytes("UTF-8"));
+//            boolean valid = verify.verify(rsa_text);
+//            System.out.println("Siganture is " + (valid ? "" : "NOT ") + "valid.");
+//        } catch (Exception e) {
+//            System.out.println(e.toString());
+//            throw new RuntimeException(e);
+//        }
     }
 
     public static boolean areCoprime(BigInteger m, BigInteger t) {
@@ -133,17 +163,8 @@ public class AsymmHandshakeHandler {
         return Base64.getEncoder().encodeToString(key);
     }
 
-    public static String byteArrayToHexString(byte[] bytes) {
-        StringBuffer buffer = new StringBuffer();
-        for(int i=0; i<bytes.length; i++) {
-            if(((int)bytes[i] & 0xff) < 0x10) buffer.append("0");
-            buffer.append(Long.toString((int) bytes[i] & 0xff, 16));
-        }
-        return buffer.toString();
-    }
-
-    public static byte[] sha256(byte[] input) throws NoSuchAlgorithmException {
-        MessageDigest md = MessageDigest.getInstance("SHA-256");
+    public static byte[] sha512(byte[] input) throws NoSuchAlgorithmException {
+        MessageDigest md = MessageDigest.getInstance("SHA-512");
         md.update(input);
         return md.digest();
     }

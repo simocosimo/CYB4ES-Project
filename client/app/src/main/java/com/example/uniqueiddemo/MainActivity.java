@@ -34,6 +34,9 @@ public class MainActivity extends AppCompatActivity {
     ActivityMainBinding binding;
     static String iccid;
     static KeyPair keyPair;
+
+    static boolean needToHandshake = false;
+    static String modulus, pubExponent, privExponent;
     static String sharedPrefName = "com.example.uniqueiddemo.asymm";
 
     static int serialNumber;
@@ -62,11 +65,21 @@ public class MainActivity extends AppCompatActivity {
         SharedPreferences sharedPref = context.getSharedPreferences(sharedPrefName, Context.MODE_PRIVATE);
         serialNumber = sharedPref.getInt("serialNumber", -1);
         if(serialNumber == -1) {
+            needToHandshake = true;
             // We do not have a serialNumber, so start handshake phase
             AsymmHandshakeHandler.keyGen();
-//            String pubpem = publicKeyToPEM((PublicKey) keyPair.getPublic());
-//            System.out.println("PEM format pk: " + pubpem);
             System.out.println("pubk: "+ keyPair.getPublic().toString());
+            // Now I have the static params populated, let's save in the shared prefs
+            SharedPreferences.Editor sharedEditor = sharedPref.edit();
+            sharedEditor.putString("modulus", modulus);
+            sharedEditor.putString("pubexponent", pubExponent);
+            sharedEditor.putString("privexponent", privExponent);
+            sharedEditor.apply();
+        } else {
+            // I have data in sharedprefs, load them
+            modulus = sharedPref.getString("modulus", "nope");
+            pubExponent = sharedPref.getString("pubexponent", "nope");
+            privExponent = sharedPref.getString("privexponent", "nope");
         }
 
         binding = ActivityMainBinding.inflate(getLayoutInflater());
