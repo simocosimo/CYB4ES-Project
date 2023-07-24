@@ -31,7 +31,7 @@ Name table = certificates
 |---------------|--------------|----------------------------------------------------------|
 | K_pub         | Text         | the public key of a device in .pem format                |
 | cert          | Text         | the certificate signed with priv_key of the server       |
-| id_cer        | Integer      | the serialNumber associated with the certificate & K_pub |
+| id_cert       | Integer      | the serialNumber associated with the certificate & K_pub |
 
 Name table = Asymm_table
 
@@ -40,7 +40,7 @@ Name table = Asymm_table
 | id_msg        | Integer      | UID                                                |
 | signature_msg | Text         | signature of the message                           |
 | msg           | Text         | message                                            |
-| hash_msg      | Text         | hash of te message                                 |
+| hash_msg      | Text         | hash of the message                                |
 | check_msg     | Text         | status of the message                              |
 | serialNumber  | Text         | serialNumber associated to a K_pub & a signed Cert |
 
