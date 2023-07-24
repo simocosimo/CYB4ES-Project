@@ -34,7 +34,7 @@ app.get('/api/getDB', async (req, res) => {
 //aggiorno il check
 // PUT /api/updateCheck
 app.put('/api/updateCheck', async (req, res) => { 
-    const vettore = req.body.verify; //req.body ha il vettore di elem da verificare.
+    const vettore = req.body.verify; //req.body have the vector of items to verify.
     try {
         const promiseMsg = [];
         for (const elem of vettore) {
@@ -49,13 +49,13 @@ app.put('/api/updateCheck', async (req, res) => {
 });
 
 
-//mando all'app l'hash del messaggio, il sale e l'ID della riga per la verifica.
+//send digest's message, salt & ID message at the client.
 // GET /api/msg_and_salt
 app.get('/api/msg_and_salt', async (req, res) => {
     dao.getMsg_and_salt().then(msg_and_salt => res.json(msg_and_salt)).catch(() => res.status(500).json({ error: `Database error while retrieving msg_and_salt` }).end())
 });
 
-//inserisco nel DB HMAC,hash del msg, msg e salt
+//insert in the DB HMAC, digest's msg, msg & salt
 // POST /api/add_esements
 app.post('/api/add_elements', async (req, res) => {
 
@@ -75,8 +75,9 @@ app.post('/api/add_elements', async (req, res) => {
     const kDigest = hmac.digest('hex');
     if (!crypto.timingSafeEqual(Buffer.from(kDigest), Buffer.from(elem.hmac))){
         res.status(501).json({error: 'HMAC is not well formed'}).end();
-    };
-    dao.addElements(elem,digest.toString('hex')).then(elem => res.json(elem)).catch(() => res.status(500).json({ error: `Database error while retrieving elems` }).end());
+    }
+    else 
+      dao.addElements(elem,digest.toString('hex')).then(elem => res.json(elem)).catch(() => res.status(500).json({ error: `Database error while retrieving elems` }).end());
 });
 
 // DELETE /api/delete/:userID
@@ -220,28 +221,28 @@ app.post('/api/asymm/handshake', async(req,res) => {
 })
 
 
-//inserisco nel DB msg, id_msg, signature_msg, serialNumber e check
+//insert in the DB msg, id_msg, signature_msg, serialNumber & check
 // POST /api/asymm/add_esements
 app.post('/api/asymm/add_elements', async (req, res) => {
 
   let elem = req.body;
 
   try {
-    let publicKeyFromID = await dao.getKpubFromID_Cert(elem.serialNumber); //estraggo K_pub da id_cert
+    let publicKeyFromID = await dao.getKpubFromID_Cert(elem.serialNumber); //pull out K_pub
    
-    const signatureBytes = forge.util.hexToBytes(elem.signature_msg);//converto la stringa esadecimale della firma in Byte
+    const signatureBytes = forge.util.hexToBytes(elem.signature_msg);//convert from exa to Byte
     
     const mdToVerify = forge.md.sha384.create();
-    mdToVerify.update(elem.msg, 'utf8');//creo digest partendo dal msg in chiaro
+    mdToVerify.update(elem.msg, 'utf8');//create digest from plaintext
     
     const parsedPubKey = forge.pki.publicKeyFromPem(publicKeyFromID);
-    let val = parsedPubKey.verify(mdToVerify.digest().bytes(), signatureBytes); // confronto digest con la firma
+    let val = parsedPubKey.verify(mdToVerify.digest().bytes(), signatureBytes); // compare digest & signature
     const hashCalculated = mdToVerify.digest().toHex();
     if (val === true)
       dao.addAsymmElements(elem,hashCalculated).then(() => res.status(201).end() ).catch(() => res.status(500).json({ error: `Database error while put elems into DB` }).end());
       
     else
-      res.status(503).json({ error: `Check tra hash(msg) e Dec(sign) non corrisposto.` });
+      res.status(503).json({ error: `Check between hash(msg) & Dec(sign) unrequited.` });
   }catch (err) {
     res.status(503).json({ error: `Database error during the extraction of the K_pub with serial Number: ${req.body.serialNumber}.` });
   }
@@ -257,10 +258,10 @@ app.get('/api/asymm/verify', async (req, res) => {
   }
 });
 
-//aggiorno il check
+//update check
 // PUT /api/asymm/updateCheck
 app.put('/api/asymm/updateCheck', async (req, res) => { 
-  const vettore = req.body.update; //req.body ha il vettore di id_msg da aggiornare.
+  const vettore = req.body.update; //req.body have the vector of id_msg to update.
   try {
       const promiseMsg = [];
       for (const elem of vettore) {

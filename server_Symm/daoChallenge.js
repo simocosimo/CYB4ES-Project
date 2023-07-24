@@ -14,14 +14,12 @@ exports.sendDB = () => {
                 return;
             }
             const my_info = rows.map((es) => ({ id:es.IDmsg, hashMsg:es.hashMsg, message: es.message, salt: es.salt, hmac: es.HMACmsg, check : es.checkMsg, DRM : es.DRM, ICCID : es.ICCID }));
-            //if (my_info.length>1)     qui estraevo solo la prima occorrenza
-                //resolve(my_info[0]);
             resolve(my_info);
         })
     })
 }
 
-//setto il nuovo check verificando prima se l'hmac è uguale o meno.
+//update check verifying hmac.
 
 //update check in Collection
 exports.updateCheck = (elem) => {
@@ -73,10 +71,7 @@ exports.updateCheck = (elem) => {
     });
 };
 
-//questo aggiornamento è fatto tramite interfaccia del server. Posso settarlo a "verificare" per abilitare la verifica mandando msg e salt al client e ricalcolando HMAC. "idle" per tenerla in sospeso. "ok" se verificata.
-
-//estraggo la riga di cui voglio verificare l'HMAC in base al messaggio ricevuto dall'app ritornando l'ID,messaggio, l'hash del msg e il sale.
-
+//extract the row whose HMAC I want to verify based on the message received from the app by returning the ID,message, msg hash and salt.
 //get msg, l'hash del msg, id and salt
 exports.getMsg_and_salt = () => {
     const request_state = "w4v";
@@ -88,8 +83,7 @@ exports.getMsg_and_salt = () => {
                 return;
             }
             const my_info = rows.map((es) => ({ id:es.IDmsg, hashMsg: es.hashMsg, salt: es.salt, ICCID : es.ICCID }));
-            //if (my_info.length>1)     qui estraevo solo la prima occorrenza
-                //resolve(my_info[0]);
+            
             resolve(my_info);
         });
     });
@@ -126,7 +120,7 @@ exports.deleteFromDB = (userID) => {
 
 //ASYMMETRIC PHASE
 
-//ottengo il serial number dalla K_pub se esiste
+//obtain SerialNumber from K_pub if exist.
 exports.getIDCertFromKpub = (digest) => {
     return new Promise((resolve, reject) => {
         const sql = 'SELECT id_cert FROM certificates WHERE K_pub = ?;';
@@ -148,7 +142,7 @@ exports.getIDCertFromKpub = (digest) => {
     });
 }
 
-//prendo il max valore e lo incremento di 1
+//get max value & increase by 1
 exports.getIDCert = () => {
     return new Promise((resolve, reject) => {
         const sql = 'SELECT id_cert FROM certificates ORDER BY id_cert DESC;';
@@ -172,7 +166,7 @@ exports.getIDCert = () => {
     });
 }
 
-//inserisco nel DB serial number, K_pub del client e cert signed
+//insert in the DB SerialNumber, K_pub client & CertSigned
 exports.addCertificate = (serialNumber,kpub,cert) => {
     return new Promise((resolve, reject) => {
         const sql = "INSERT INTO certificates (K_pub,cert,id_cert) values(?,?,?);"
@@ -186,7 +180,7 @@ exports.addCertificate = (serialNumber,kpub,cert) => {
     });  
 }
 
-//ottengo il K_pub dalla serial number se esiste
+//pull out K_pub from SerialNumber if exist
 exports.getKpubFromID_Cert = (idCert) => {
     return new Promise((resolve, reject) => {
         const sql = 'SELECT K_pub FROM certificates WHERE id_cert = ?;';
@@ -205,7 +199,7 @@ exports.getKpubFromID_Cert = (idCert) => {
     });
 }
 
-// aggiungo il nuovo messaggio al DB insieme al suo id_msg, hash(msg), sign_msg, serialNumber, check
+// add new message in the DB with id_msg, hash(msg), sign_msg, serialNumber & check
 exports.addAsymmElements = (elem, hash_msg) => {
     const check = "default";
     
@@ -221,7 +215,7 @@ exports.addAsymmElements = (elem, hash_msg) => {
     });
 }
 
-// seleziono tutte le righe che corrispondono a check_msg = w4v && serialNumber passato dall'app.
+// select all lines that match check_msg = w4v && serialNumber passed by the app.
 exports.getMsgW4V = () => {
     const checkMsg = "w4v";
     return new Promise((resolve, reject) => {
@@ -237,7 +231,7 @@ exports.getMsgW4V = () => {
     });
 }
 
-// aggiorno il check_msg dato il corrispettivo id_msg già verificato lato client.
+// Update the check_msg given the corresponding id_msg already checked on the client side.
 exports.updateCheckAsymm = (elem) => {
     return new Promise((resolve, reject) => {
 		const firstFunction = () => {
