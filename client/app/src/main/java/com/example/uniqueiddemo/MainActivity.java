@@ -57,30 +57,32 @@ public class MainActivity extends AppCompatActivity {
         serialNumber = sharedPref.getInt("serialNumber", -1);
         System.out.println("SerialNumber: " + serialNumber);
 
-        // Verifica se il permesso READ_PHONE_STATE è stato concesso
-        int permissionCheck = ContextCompat.checkSelfPermission(this, android.Manifest.permission.READ_PHONE_STATE);
-        if (permissionCheck != PackageManager.PERMISSION_GRANTED && Build.VERSION.SDK_INT <= 30) {
-            // Se il permesso non è stato concesso, richiedilo all'utente
-            ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.READ_PHONE_STATE},
-                    PERMISSIONS_REQUEST_READ_PHONE_STATE);
-        } else if (Build.VERSION.SDK_INT <= 30) {
-            TelecomManager tm2 = (TelecomManager) getSystemService(Context.TELECOM_SERVICE);
-            Iterator<PhoneAccountHandle> phoneAccounts = tm2.getCallCapablePhoneAccounts().listIterator();
-            PhoneAccountHandle phoneAccountHandle = phoneAccounts.next();
-            iccid = phoneAccountHandle.getId().substring(0, 19);
-        } else if (Build.VERSION.SDK_INT > 30){
-            iccid = null;
-            if(serialNumber == -1) {
-                needToHandshake = true;
-                AsymmHandshakeHandler.keyGen();
-                System.out.println("pubk: "+ keyPair.getPublic().toString());
-                // Now I have the static params populated, let's save in the shared prefs
-                SharedPreferences.Editor sharedEditor = sharedPref.edit();
-                sharedEditor.putString("modulus", modulus);
-                sharedEditor.putString("pubexponent", pubExponent);
-                sharedEditor.putString("privexponent", privExponent);
-                sharedEditor.apply();
+        if(serialNumber == -1) {
+            // Verifica se il permesso READ_PHONE_STATE è stato concesso
+            int permissionCheck = ContextCompat.checkSelfPermission(this, android.Manifest.permission.READ_PHONE_STATE);
+            if (permissionCheck != PackageManager.PERMISSION_GRANTED && Build.VERSION.SDK_INT <= 30) {
+                // Se il permesso non è stato concesso, richiedilo all'utente
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.READ_PHONE_STATE},
+                        PERMISSIONS_REQUEST_READ_PHONE_STATE);
+            } else if (Build.VERSION.SDK_INT <= 30) {
+                TelecomManager tm2 = (TelecomManager) getSystemService(Context.TELECOM_SERVICE);
+                Iterator<PhoneAccountHandle> phoneAccounts = tm2.getCallCapablePhoneAccounts().listIterator();
+                PhoneAccountHandle phoneAccountHandle = phoneAccounts.next();
+                iccid = phoneAccountHandle.getId().substring(0, 19);
+            } else if (Build.VERSION.SDK_INT > 30){
+                iccid = null;
+                if(serialNumber == -1) {
+                    needToHandshake = true;
+                    AsymmHandshakeHandler.keyGen();
+                    System.out.println("pubk: "+ keyPair.getPublic().toString());
+                    // Now I have the static params populated, let's save in the shared prefs
+                    SharedPreferences.Editor sharedEditor = sharedPref.edit();
+                    sharedEditor.putString("modulus", modulus);
+                    sharedEditor.putString("pubexponent", pubExponent);
+                    sharedEditor.putString("privexponent", privExponent);
+                    sharedEditor.apply();
+                }
             }
         }
 
