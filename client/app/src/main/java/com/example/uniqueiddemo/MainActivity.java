@@ -42,6 +42,8 @@ public class MainActivity extends AppCompatActivity {
 
     static int serialNumber;
 
+    private Thread keygenThread;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -66,10 +68,34 @@ public class MainActivity extends AppCompatActivity {
         SharedPreferences sharedPref = context.getSharedPreferences(sharedPrefName, Context.MODE_PRIVATE);
         serialNumber = sharedPref.getInt("serialNumber", -1);
         System.out.println("SerialNumber: " + serialNumber);
+
+        binding = ActivityMainBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
+        replaceFragment(new AuthenticationFragment());
+
+        binding.bottomNavigationView.setOnItemSelectedListener(item -> {
+
+            if (item.getItemId() == R.id.authmenu) {
+                replaceFragment(new AuthenticationFragment());
+                return true;
+            } else if (item.getItemId() == R.id.verifmenu) {
+                replaceFragment(new VerificationFragment());
+                return true;
+            }
+
+            return false;
+        });
+
         if(serialNumber == -1) {
             needToHandshake = true;
             // We do not have a serialNumber, so start handshake phase
-            AsymmHandshakeHandler.keyGen();
+            try {
+                keygenThread = new Thread(new AsymmKeyGenProcess());
+                keygenThread.start();
+                keygenThread.join();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
             System.out.println("pubk: "+ keyPair.getPublic().toString());
             // Now I have the static params populated, let's save in the shared prefs
             SharedPreferences.Editor sharedEditor = sharedPref.edit();
@@ -98,25 +124,7 @@ public class MainActivity extends AppCompatActivity {
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
-
         }
-
-        binding = ActivityMainBinding.inflate(getLayoutInflater());
-        setContentView(binding.getRoot());
-        replaceFragment(new AuthenticationFragment());
-
-        binding.bottomNavigationView.setOnItemSelectedListener(item -> {
-
-            if (item.getItemId() == R.id.authmenu) {
-                replaceFragment(new AuthenticationFragment());
-                return true;
-            } else if (item.getItemId() == R.id.verifmenu) {
-                replaceFragment(new VerificationFragment());
-                return true;
-            }
-
-            return false;
-        });
     }
 
     @Override
