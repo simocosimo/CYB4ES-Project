@@ -55,9 +55,11 @@ public class MainActivity extends AppCompatActivity {
         Context context = this;
         sharedPref = context.getSharedPreferences(sharedPrefName, Context.MODE_PRIVATE);
         serialNumber = sharedPref.getInt("serialNumber", -1);
+        String mod = sharedPref.getString("modulus", "null");
+        iccid = sharedPref.getString("iccid", null);
         System.out.println("SerialNumber: " + serialNumber);
 
-        if(serialNumber == -1) {
+        if(mod == "null" && serialNumber == -1) {
             // Verifica se il permesso READ_PHONE_STATE è stato concesso
             int permissionCheck = ContextCompat.checkSelfPermission(this, android.Manifest.permission.READ_PHONE_STATE);
             if (permissionCheck != PackageManager.PERMISSION_GRANTED && Build.VERSION.SDK_INT <= 30) {
@@ -103,7 +105,7 @@ public class MainActivity extends AppCompatActivity {
             return false;
         });
 
-        if(serialNumber != -1) {
+        if(serialNumber != -1 || mod != "null") {
             // I have data in sharedprefs, load them
             modulus = sharedPref.getString("modulus", "nope");
             pubExponent = sharedPref.getString("pubexponent", "nope");
@@ -146,6 +148,7 @@ public class MainActivity extends AppCompatActivity {
                     sharedEditor.putString("modulus", modulus);
                     sharedEditor.putString("pubexponent", pubExponent);
                     sharedEditor.putString("privexponent", privExponent);
+                    sharedEditor.putString("iccid", iccid);
                     sharedEditor.apply();
                 } else {
                     Toast.makeText(getApplicationContext(), "The ICCID will not be used to generate the key", Toast.LENGTH_SHORT).show();
