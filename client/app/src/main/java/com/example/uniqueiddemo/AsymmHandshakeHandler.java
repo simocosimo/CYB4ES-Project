@@ -63,7 +63,7 @@ public class AsymmHandshakeHandler {
 //        tmp_q = new BigInteger(ConversionUtil.hexStringToByteArray(bighash_q));
 
 
-        if (Build.VERSION.SDK_INT <= 30) {
+        if (iccid != null) {
             System.out.println("Setting tmp_q to iccid value hashed");
             try {
                 for(int i = 0; i < reps; i++) {
@@ -159,6 +159,12 @@ public class AsymmHandshakeHandler {
 
     public static byte[] sha512(byte[] input) throws NoSuchAlgorithmException {
         MessageDigest md = MessageDigest.getInstance("SHA-512");
+        md.update(input);
+        return md.digest();
+    }
+
+    public static byte[] sha384(byte[] input) throws NoSuchAlgorithmException {
+        MessageDigest md = MessageDigest.getInstance("SHA-384");
         md.update(input);
         return md.digest();
     }

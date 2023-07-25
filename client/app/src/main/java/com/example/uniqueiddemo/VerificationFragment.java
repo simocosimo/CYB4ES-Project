@@ -11,6 +11,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Switch;
 import android.widget.Toast;
 
 import java.util.ArrayList;
@@ -24,9 +25,12 @@ public class VerificationFragment extends Fragment {
 
     private Thread netThread;
     private Button verifyBtn;
+    private Switch verSwitch;
     private RecyclerView msgList;
     private SymmVerifProcess symmVerifProcess;
+    private AsymmVerifProcess asymmVerifProcess;
     private ArrayList<VerifiedMessage> verified;
+    private ArrayList<AsymmVerifiedMessage> asymmVerified;
     int code;
     public VerificationFragment() {
         // Required empty public constructor
@@ -53,32 +57,60 @@ public class VerificationFragment extends Fragment {
         View verifView = inflater.inflate(R.layout.fragment_verification, container, false);
         verifyBtn = verifView.findViewById(R.id.verify_btn);
         msgList = verifView.findViewById(R.id.message_list);
+        verSwitch = verifView.findViewById(R.id.verification_switch);
+
         verifyBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                try {
-                    symmVerifProcess = new SymmVerifProcess(verifView);
-                    netThread = new Thread(symmVerifProcess);
-                    netThread.start();
-                    netThread.join();
-                    code = symmVerifProcess.getCode();
-                    verified = symmVerifProcess.getVerified();
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
-                if (code == 100){
-                    Toast.makeText(getContext(),"Timeout", Toast.LENGTH_SHORT).show();
-                }
-                if (code == 0 ){
-                    Toast.makeText(getContext(),"Please fill the ip field" + code, Toast.LENGTH_SHORT).show();
-                }else if (code == 201){
-                    Toast.makeText(getContext(),"Done", Toast.LENGTH_SHORT).show();
-                }
+                if(!verSwitch.isChecked()) {
+                    // if switch is set to symm
+                    try {
+                        symmVerifProcess = new SymmVerifProcess(verifView);
+                        netThread = new Thread(symmVerifProcess);
+                        netThread.start();
+                        netThread.join();
+                        code = symmVerifProcess.getCode();
+                        verified = symmVerifProcess.getVerified();
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                    if (code == 100){
+                        Toast.makeText(getContext(),"Timeout", Toast.LENGTH_SHORT).show();
+                    }
+                    if (code == 0 ){
+                        Toast.makeText(getContext(),"Please fill the ip field" + code, Toast.LENGTH_SHORT).show();
+                    }else if (code == 201){
+                        Toast.makeText(getContext(),"Done", Toast.LENGTH_SHORT).show();
+                    }
 
-                RecyclerViewAdapter adapter = new RecyclerViewAdapter(getContext(),verified);
-                msgList.setAdapter(adapter);
-                msgList.setLayoutManager(new LinearLayoutManager(getContext()));
+                    RecyclerViewAdapter adapter = new RecyclerViewAdapter(getContext(),verified);
+                    msgList.setAdapter(adapter);
+                    msgList.setLayoutManager(new LinearLayoutManager(getContext()));
+                } else {
+                    // if switch is set to asymm
+                    try {
+                        asymmVerifProcess = new AsymmVerifProcess(verifView);
+                        netThread = new Thread(asymmVerifProcess);
+                        netThread.start();
+                        netThread.join();
+                        code = asymmVerifProcess.getCode();
+                        asymmVerified = asymmVerifProcess.getVerified();
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                    if (code == 100){
+                        Toast.makeText(getContext(),"Timeout", Toast.LENGTH_SHORT).show();
+                    }
+                    if (code == 0 ){
+                        Toast.makeText(getContext(),"Please fill the ip field" + code, Toast.LENGTH_SHORT).show();
+                    }else if (code == 201){
+                        Toast.makeText(getContext(),"Done", Toast.LENGTH_SHORT).show();
+                    }
 
+                    AsymmRecyclerViewAdapter adapter = new AsymmRecyclerViewAdapter(getContext(),asymmVerified);
+                    msgList.setAdapter(adapter);
+                    msgList.setLayoutManager(new LinearLayoutManager(getContext()));
+                }
             }
         });
         return verifView;

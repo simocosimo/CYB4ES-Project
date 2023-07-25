@@ -99,10 +99,12 @@ public class AuthenticationFragment extends Fragment {
 
             if (i == R.id.radio_symm){
                 auth.setEnabled(true);
+                useIccid.setEnabled(true);
                 type = authView.findViewById(i);
                 Toast.makeText(authView.getContext(), type.getText() + " chosen", Toast.LENGTH_SHORT).show();
             }else if (i == R.id.radio_asymm){
                 type = authView.findViewById(i);
+                useIccid.setEnabled(false);
                 if(needToHandshake) {
                     auth.setEnabled(false);
                     Toast.makeText(authView.getContext(), type.getText() + " chosen, handshake in progress", Toast.LENGTH_SHORT).show();
@@ -133,6 +135,7 @@ public class AuthenticationFragment extends Fragment {
                         sharededitor.putInt("serialNumber", sn);
                         sharededitor.apply();
                         auth.setEnabled(true);
+                        needToHandshake = false;
                     }
                 } else {
                     Toast.makeText(authView.getContext(), type.getText() + " chosen", Toast.LENGTH_SHORT).show();
