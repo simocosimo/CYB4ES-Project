@@ -203,7 +203,7 @@ Method: POST
 
 Description: creation of a certificate using the public key's device and self signed it using private key's server.
 
-Request body: An object representing a message (Content-Type: `application/json`).
+Request body: An object representing the public key of the client (Content-Type: `application/json`).
 
 ```
 {    
