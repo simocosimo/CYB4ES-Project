@@ -17,6 +17,8 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.telecom.PhoneAccountHandle;
 import android.telecom.TelecomManager;
 import android.widget.Toast;
@@ -29,24 +31,31 @@ import java.security.KeyPair;
 import java.security.PublicKey;
 import java.util.Base64;
 import java.util.Iterator;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class MainActivity extends AppCompatActivity {
 
     ActivityMainBinding binding;
-    static String iccid;
+    static String iccid = null;
     static KeyPair keyPair;
 
     static boolean needToHandshake = false;
     static String modulus, pubExponent, privExponent;
     static String sharedPrefName = "com.example.uniqueiddemo.asymm";
-
     static int serialNumber;
+    static SharedPreferences sharedPref;
 
-    private Thread keygenThread;
+//    private AsymmKeyGenProcess keygenThread;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        Context context = this;
+        sharedPref = context.getSharedPreferences(sharedPrefName, Context.MODE_PRIVATE);
+        serialNumber = sharedPref.getInt("serialNumber", -1);
+        System.out.println("SerialNumber: " + serialNumber);
 
         // Verifica se il permesso READ_PHONE_STATE è stato concesso
         int permissionCheck = ContextCompat.checkSelfPermission(this, android.Manifest.permission.READ_PHONE_STATE);
@@ -62,12 +71,18 @@ public class MainActivity extends AppCompatActivity {
             iccid = phoneAccountHandle.getId().substring(0, 19);
         } else if (Build.VERSION.SDK_INT > 30){
             iccid = null;
+            if(serialNumber == -1) {
+                needToHandshake = true;
+                AsymmHandshakeHandler.keyGen();
+                System.out.println("pubk: "+ keyPair.getPublic().toString());
+                // Now I have the static params populated, let's save in the shared prefs
+                SharedPreferences.Editor sharedEditor = sharedPref.edit();
+                sharedEditor.putString("modulus", modulus);
+                sharedEditor.putString("pubexponent", pubExponent);
+                sharedEditor.putString("privexponent", privExponent);
+                sharedEditor.apply();
+            }
         }
-
-        Context context = this;
-        SharedPreferences sharedPref = context.getSharedPreferences(sharedPrefName, Context.MODE_PRIVATE);
-        serialNumber = sharedPref.getInt("serialNumber", -1);
-        System.out.println("SerialNumber: " + serialNumber);
 
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
@@ -86,24 +101,7 @@ public class MainActivity extends AppCompatActivity {
             return false;
         });
 
-        if(serialNumber == -1) {
-            needToHandshake = true;
-            // We do not have a serialNumber, so start handshake phase
-            try {
-                keygenThread = new Thread(new AsymmKeyGenProcess());
-                keygenThread.start();
-                keygenThread.join();
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-            System.out.println("pubk: "+ keyPair.getPublic().toString());
-            // Now I have the static params populated, let's save in the shared prefs
-            SharedPreferences.Editor sharedEditor = sharedPref.edit();
-            sharedEditor.putString("modulus", modulus);
-            sharedEditor.putString("pubexponent", pubExponent);
-            sharedEditor.putString("privexponent", privExponent);
-            sharedEditor.apply();
-        } else {
+        if(serialNumber != -1) {
             // I have data in sharedprefs, load them
             modulus = sharedPref.getString("modulus", "nope");
             pubExponent = sharedPref.getString("pubexponent", "nope");
@@ -116,11 +114,7 @@ public class MainActivity extends AppCompatActivity {
             BigInteger se = new BigInteger(ConversionUtil.hexStringToByteArray(privExponent));
             System.out.println("modulus in big int is " + m);
             try {
-                AsymmHandshakeHandler.saveKeyPair(
-                        m,
-                        pe,
-                        se
-                );
+                AsymmHandshakeHandler.saveKeyPair(m, pe, se);
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
@@ -142,10 +136,27 @@ public class MainActivity extends AppCompatActivity {
                     Iterator<PhoneAccountHandle> phoneAccounts = tm2.getCallCapablePhoneAccounts().listIterator();
                     PhoneAccountHandle phoneAccountHandle = phoneAccounts.next();
                     iccid = phoneAccountHandle.getId().substring(0,19);
-
+                    needToHandshake = true;
+                    AsymmHandshakeHandler.keyGen();
+                    System.out.println("pubk: "+ keyPair.getPublic().toString());
+                    // Now I have the static params populated, let's save in the shared prefs
+                    SharedPreferences.Editor sharedEditor = sharedPref.edit();
+                    sharedEditor.putString("modulus", modulus);
+                    sharedEditor.putString("pubexponent", pubExponent);
+                    sharedEditor.putString("privexponent", privExponent);
+                    sharedEditor.apply();
                 } else {
                     Toast.makeText(getApplicationContext(), "The ICCID will not be used to generate the key", Toast.LENGTH_SHORT).show();
                     iccid = null;
+                    needToHandshake = true;
+                    AsymmHandshakeHandler.keyGen();
+                    System.out.println("pubk: "+ keyPair.getPublic().toString());
+                    // Now I have the static params populated, let's save in the shared prefs
+                    SharedPreferences.Editor sharedEditor = sharedPref.edit();
+                    sharedEditor.putString("modulus", modulus);
+                    sharedEditor.putString("pubexponent", pubExponent);
+                    sharedEditor.putString("privexponent", privExponent);
+                    sharedEditor.apply();
                 }
             }
 

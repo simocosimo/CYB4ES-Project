@@ -93,6 +93,8 @@ public class AsymmHandshakeHandler {
         System.out.println("bighash q: " + bighash_q);
         q = new BigInteger(ConversionUtil.hexStringToByteArray(bighash_q));
 
+        q = q.abs();
+        p = p.abs();
         q = q.nextProbablePrime();
         p = p.nextProbablePrime();
         System.out.println("p prime is: " + p);
