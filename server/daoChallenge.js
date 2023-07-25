@@ -225,7 +225,7 @@ exports.getMsgW4V = () => {
                 reject(err);
                 return;
             }
-            const my_info = rows.map((es) => ({ id_msg: es.id_msg, hash_msg: es.hash_msg }));
+            const my_info = rows.map((es) => ({ id_msg: es.id_msg, hash_msg: es.hash_msg, msg: es.msg }));
             resolve(my_info);
         });
     });
