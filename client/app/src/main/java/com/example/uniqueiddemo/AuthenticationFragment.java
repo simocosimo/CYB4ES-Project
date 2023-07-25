@@ -90,7 +90,7 @@ public class AuthenticationFragment extends Fragment {
         enc = authView.findViewById(R.id.radio_group);
         type = authView.findViewById(R.id.radio_symm);
         useIccid = authView.findViewById(R.id.use_iccid);
-        if (Build.VERSION.SDK_INT > 30 || iccid == null){
+        if (Build.VERSION.SDK_INT > 30){
             useIccid.setVisibility(View.INVISIBLE);
         } else {
             useIccid.setChecked(false);

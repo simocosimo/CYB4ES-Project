@@ -10,6 +10,7 @@ import android.widget.Switch;
 import android.widget.TextView;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 import java.io.IOException;
 import java.security.InvalidKeyException;
@@ -48,7 +49,7 @@ public class SymmAuthProcess implements Runnable{
         ip = authView.findViewById(R.id.insert_ip);
         msg = authView.findViewById(R.id.insert_message);
         secureRandom = new SecureRandom();
-        gson = new Gson();
+        gson = new GsonBuilder().serializeNulls().create();
         client = new OkHttpClient();
         useIccid = authView.findViewById(R.id.use_iccid);
     }
@@ -96,7 +97,7 @@ public class SymmAuthProcess implements Runnable{
                  InvalidKeyException e) {
             throw new RuntimeException(e);
         }
-        addMessage = new AddMessage(kDigest, msg.getText().toString(), salt, drm, useIccid.isChecked() ? iccid : null);
+        addMessage = new AddMessage(kDigest, msg.getText().toString(), salt, drm, (useIccid.isChecked() && iccid != null ? iccid : null));
         String requestBody = gson.toJson(addMessage);
         try {
             RequestBody body = RequestBody.create(requestBody, JSON);

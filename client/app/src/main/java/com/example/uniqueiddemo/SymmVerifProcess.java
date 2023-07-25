@@ -12,6 +12,7 @@ import android.widget.Toast;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 
 import java.io.IOException;
@@ -46,7 +47,7 @@ public class SymmVerifProcess implements Runnable{
     public SymmVerifProcess(View verifyView){
         ip = verifyView.findViewById(R.id.ip_addr_verif);
         client = new OkHttpClient();
-        gson = new Gson();
+        gson = new GsonBuilder().serializeNulls().create();
         verify = new ArrayList<>();
         verified = new ArrayList<>();
     }
