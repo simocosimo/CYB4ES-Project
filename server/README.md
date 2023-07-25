@@ -207,7 +207,7 @@ Request body: An object representing a message (Content-Type: `application/json`
 
 ```
 {    
-     "kpub" : "-----BEGIN PUBLIC KEY-----MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA5TO/SCYHoeudCfm4FzNH36eTx5D76HYdQGN/lyvKzP1DF2nUyluDq9hDvx8PK5ogppc3wlptD8zdsLJ/    +uNh7UYfCscnIiTY+QYAc51HKM/E1dm+tqk2Xu952F6cQv0klYCuNCoKhwgcLta9p+zSTI0E8Gnptknpt8+FePpHSRNN3Fvcg7vun7jmk2qpweSEBcuK31fZYKXtw2rGIeNo7sGILN5WEdOjE2ShFeY34erzw3n3Nl4iFJ9ZK0hK+79itXrwsZm54n2etIzwlLeHHGfHJbNHMu9GHAd2rv+0VpjYWmOF8VaCFjtzA/8dD3/EuvGzFDvSDfIfbUgJDuIZ1QIDAQAB-----END PUBLIC KEY-----"
+     
 }
 ```
 
@@ -255,12 +255,13 @@ Request body: _None_
 
 Response: `201 Created` (success) or `503 Service Unavailable` (generic error). If the request body is not valid, `422 Unprocessable Entity` (validation error).
 
-Response body: a vector of objects containing id_messages and digest in waiting for verification.
+Response body: a vector of objects containing id_messages, message and digest in waiting for verification.
 
 ```
 [
      {
           "id_msg":2,
+          "msg": "ciao",
           "hash_msg":"6eda4fcc7685abba4345b5c30dc13885aff7359a51d1877c7c55cf305dd52fc622bcd1a8183ac2e7c7fdc1fc14c3f685"
      }
 ]
