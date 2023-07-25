@@ -8,7 +8,6 @@ const cors = require('cors');
 const crypto =  require('node:crypto');
 const fs = require("fs"); //adoperate on file system
 const forge = require('node-forge'); //generate a key pairs RSA
-// const pem = require('pem'); //generate a self certificate
 
 // init express
 const PORT = 3001;
@@ -101,7 +100,6 @@ app.post('/api/asymm/handshake', async(req,res) => {
    var n = req.body.n;
    var e = req.body.e;
    var keypub = forge.rsa.setPublicKey(n,e);
-   console.log(keypub);
    var pempubkey = forge.pki.publicKeyToPem(keypub);
 
     let serialNumber= -1;
@@ -196,23 +194,6 @@ app.post('/api/asymm/handshake', async(req,res) => {
             res.status(503).json({ error: `Database error during the insertion of the serialNumber, Kpub, certSigned into the DB` });
         }
     
-          // verify certificate
-          // let caStore = forge.pki.createCaStore();
-          // caStore.addCertificate(cert);
-          // try {
-          //   forge.pki.verifyCertificateChain(caStore, [cert],
-          //     function(vfd, depth, chain) {
-          //       if(vfd === true) {
-          //         console.log('SubjectKeyIdentifier verified: ' + cert.verifySubjectKeyIdentifier());
-          //         console.log('Certificate verified.');
-          //       }
-          //       res.status(204).end();
-          //       return true;
-          //   });
-          // } catch(ex) {
-          //   console.log('Certificate verification failure: ' + JSON.stringify(ex, null, 2));
-          //   res.status(501).json({error: 'Errore durante la verifica del certificato'}).end();
-          // }
         }catch (err){
           res.status(503).json({ error: `Database error during the extraction of the max serial number. ${err}` });
         }
@@ -280,33 +261,5 @@ app.put('/api/asymm/updateCheck', async (req, res) => {
       res.status(503).json({ error: `Database error during the update check.` }).end();
   }
 });
-
-// app.post('/api/asymm/handshake2', async(req,res) => {
-  
-//   const publicKey = Buffer.from(req.body.kpub, 'base64').toString('ascii');
-
-//   // Crea un certificato autofirmato utilizzando la chiave pubblica
-//   pem.createCertificate({ days: 1000, selfSigned: true, publicKey }, (err, keys) => {
-//     if (err) {
-//       console.error('Errore durante la generazione del certificato:', err);
-//       res.status(501).json({error: 'Errore durante la generazione del certificato'}).end();
-//       return;
-//     }
-
-//     // Esporta il certificato e la chiave privata in file PEM
-//     fs.writeFileSync('cert.pem', keys.certificate);
-//     fs.writeFileSync('private-key-cert.pem', keys.serviceKey);
-
-//     const privateKey = fs.readFileSync('private_key.pem', 'utf8');
-//     const cert = fs.readFileSync('cert.pem', 'utf8');
-
-//     // Firma il certificato con la chiave privata
-//     const parsedCert = forge.pki.certificateFromPem(cert);
-//     const parsedPrivateKey = forge.pki.privateKeyFromPem(privateKey);
-//     parsedCert.sign(parsedPrivateKey);
-//     fs.writeFileSync('signed-cert.pem', forge.pki.certificateToPem(parsedCert));
-//   });
-//   res.status(204).end();
-// })
 
 app.listen(PORT, () => { console.log(`Server listening at http://localhost:${PORT}/`) });
