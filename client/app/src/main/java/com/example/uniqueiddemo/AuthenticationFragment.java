@@ -164,7 +164,7 @@ public class AuthenticationFragment extends Fragment {
                     if (code == 200){
                         Toast.makeText(getContext(),"Message sent correctly",Toast.LENGTH_SHORT).show();
                     }
-                    if (code == 501){
+                    else if (code == 501){
                         Toast.makeText(getContext(),"HMAC not well formed",Toast.LENGTH_SHORT).show();
                     }
                     else {
