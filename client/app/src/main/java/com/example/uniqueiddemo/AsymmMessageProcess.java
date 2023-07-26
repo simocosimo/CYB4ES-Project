@@ -25,7 +25,6 @@ public class AsymmMessageProcess implements Runnable{
     private final Gson gson;
     private final OkHttpClient client;
     private AsymmAddMessage addMessage;
-//    private Switch useIccid;
     private int code;
 
     private ResponseBody res_body;
@@ -33,10 +32,8 @@ public class AsymmMessageProcess implements Runnable{
     public AsymmMessageProcess(View authView){
         ip = authView.findViewById(R.id.insert_ip);
         msg = authView.findViewById(R.id.insert_message);
-//        secureRandom = new SecureRandom();
         gson = new Gson();
         client = new OkHttpClient();
-//        useIccid = authView.findViewById(R.id.use_iccid);
     }
 
     public void run() {
@@ -45,7 +42,7 @@ public class AsymmMessageProcess implements Runnable{
             code = 0;
             return;
         }
-        // change this to the right endpoint of asymm
+
         String url = "http://" + ip.getText().toString() + ":3001/api/asymm/add_elements";
         MediaType JSON = MediaType.get("application/json; charset=utf-8");
 

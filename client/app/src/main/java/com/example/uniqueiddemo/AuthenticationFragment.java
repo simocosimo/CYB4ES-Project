@@ -95,40 +95,44 @@ public class AuthenticationFragment extends Fragment {
         } else {
             useIccid.setChecked(false);
         }
-        enc.setOnCheckedChangeListener((radioGroup, i) -> {
 
-            if (i == R.id.radio_symm){
+        enc.setOnCheckedChangeListener((radioGroup, i) -> {
+            if (i == R.id.radio_symm) {
+                // Symmetric encryption radio button is chosen
                 auth.setEnabled(true);
                 useIccid.setEnabled(true);
                 type = authView.findViewById(i);
                 Toast.makeText(authView.getContext(), type.getText() + " chosen", Toast.LENGTH_SHORT).show();
-            }else if (i == R.id.radio_asymm){
+            } else if (i == R.id.radio_asymm) {
+                // Asymmetric encryption radio button is chosen
                 type = authView.findViewById(i);
                 useIccid.setEnabled(false);
                 if(needToHandshake) {
+                    // No data saved in sharedPreferences, so handshake needs to be executed
                     auth.setEnabled(false);
                     Toast.makeText(authView.getContext(), type.getText() + " chosen, handshake in progress", Toast.LENGTH_SHORT).show();
-                    // Perform handhsake
                     AsymmHandshakeProcess ap = new AsymmHandshakeProcess(authView);
                     try {
+                        // Thread contacting server for handshake
                         netThread = new Thread(ap);
                         netThread.start();
                         netThread.join();
                     } catch (InterruptedException e) {
                         throw new RuntimeException(e);
                     }
+
+                    // Handling the result
                     int code = ap.getCode();
                     if(code == 0) {
                         Toast.makeText(getContext(),"Please fill IP field for handshake phase",Toast.LENGTH_SHORT).show();
                         RadioButton sy = authView.findViewById(R.id.radio_symm);
                         sy.setChecked(true);
-                    }
-                    if(code == 201) {
+                    } else if(code == 201) {
                         Toast.makeText(getContext(),"Handshake completed",Toast.LENGTH_SHORT).show();
                         JsonObject resjson = JsonParser.parseString(ap.getBody()).getAsJsonObject();
                         int sn = resjson.get("serialNumber").getAsInt();
                         System.out.println("Serial number is: " + sn);
-                        // save the serialnumber into shared prefs and static value
+                        // save the serialnumber into shared preferences and static value
                         serialNumber = sn;
                         SharedPreferences sharedpref = this.getActivity().getSharedPreferences(sharedPrefName, Context.MODE_PRIVATE);
                         SharedPreferences.Editor sharededitor = sharedpref.edit();
@@ -141,14 +145,12 @@ public class AuthenticationFragment extends Fragment {
                     Toast.makeText(authView.getContext(), type.getText() + " chosen", Toast.LENGTH_SHORT).show();
                 }
             }
-
         });
         auth.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
-                if(type.getId() == R.id.radio_symm){
-
+                // Send message according to the chosen encryption
+                if(type.getId() == R.id.radio_symm) {
                     SymmAuthProcess symmAuthProcess = new SymmAuthProcess(authView);
                     try {
                         netThread = new Thread(symmAuthProcess);
@@ -157,17 +159,16 @@ public class AuthenticationFragment extends Fragment {
                     } catch (InterruptedException e) {
                         throw new RuntimeException(e);
                     }
-                    int code= symmAuthProcess.getCode();
+
+                    int code = symmAuthProcess.getCode();
                     if(code == 0){
                         Toast.makeText(getContext(),"Please fill both input fields",Toast.LENGTH_SHORT).show();
                     }
                     if (code == 200){
                         Toast.makeText(getContext(),"Message sent correctly",Toast.LENGTH_SHORT).show();
-                    }
-                    else if (code == 501){
+                    } else if (code == 501){
                         Toast.makeText(getContext(),"HMAC not well formed",Toast.LENGTH_SHORT).show();
-                    }
-                    else {
+                    } else {
                         Toast.makeText(getContext(),"Somethig went wrong: error code " + code, Toast.LENGTH_SHORT).show();
                     }
                 } else if (type.getId() == R.id.radio_asymm) {
@@ -179,14 +180,13 @@ public class AuthenticationFragment extends Fragment {
                     } catch (Exception e) {
                         throw new RuntimeException(e);
                     }
+
                     int code = asymmMessageProcess.getCode();
                     if(code == 0){
                         Toast.makeText(getContext(),"Please fill both input fields",Toast.LENGTH_SHORT).show();
-                    }
-                    else if (code == 201){
+                    } else if (code == 201){
                         Toast.makeText(getContext(),"Message sent correctly",Toast.LENGTH_SHORT).show();
-                    }
-                    else if (code == 503){
+                    } else if (code == 503){
                         Toast.makeText(getContext(),"Server signal wrong signature",Toast.LENGTH_SHORT).show();
                     } else {
                         Toast.makeText(getContext(),"Somethig went wrong: error code " + code, Toast.LENGTH_SHORT).show();
@@ -196,5 +196,4 @@ public class AuthenticationFragment extends Fragment {
         });
         return authView;
     }
-
 }

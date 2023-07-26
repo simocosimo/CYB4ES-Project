@@ -29,7 +29,6 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 
 public class AsymmVerifProcess implements Runnable{
-    private static final UUID WIDEVINE_UUID = new UUID(-0x121074568629b532L, -0x5c37d8232ae2de13L);
     private int code;
     private final EditText ip;
     private final OkHttpClient client;
@@ -49,7 +48,7 @@ public class AsymmVerifProcess implements Runnable{
     @Override
     public void run() {
 
-        if(ip.getText().toString().equals("")){
+        if(ip.getText().toString().equals("")) {
             code = 0;
             return;
         }
@@ -57,7 +56,8 @@ public class AsymmVerifProcess implements Runnable{
         String url = "http://" + ip.getText().toString() + ":3001/api/asymm/verify";
         MediaType JSON = MediaType.get("application/json; charset=utf-8");
 
-        try{
+        try {
+            // Ask for messages that are in the "wait for verification" status
             Request request = new Request.Builder()
                     .url(url)
                     .build();
@@ -65,19 +65,14 @@ public class AsymmVerifProcess implements Runnable{
             Type messageListType = new TypeToken<ArrayList<AsymmVerifyMessage>>() {}.getType();
             messageList = gson.fromJson(response.body().string(),messageListType);
 
+            // For each message, sign it again and append data to the data structure that will
+            // be sent back to server for the check
             for (AsymmVerifyMessage message : messageList){
-                System.out.println(message.toString());
-                // TODO: get the hash from the object and encrypt it with privatekey
                 String hash_msg = message.getHashMsg();
-                System.out.println("Message " + message.getIDmsg() + " hash is " + hash_msg);
                 String inc_msg = message.getMsg();
                 String incSigned = AsymmHandshakeHandler.signMessage(inc_msg);
-                String originalSigned = AsymmHandshakeHandler.signMessage("camomillo");
-                System.out.println("Recalc signature is " + incSigned);
-                System.out.println("Original signs is " + originalSigned);
                 verify.add(new AsymmServerCheck(hash_msg, message.getIDmsg(), incSigned));
             }
-
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -89,7 +84,8 @@ public class AsymmVerifProcess implements Runnable{
         String url1 = "http://" + ip.getText().toString() + ":3001/api/asymm/updateCheck";
         RequestBody body = RequestBody.create(requestBody,JSON);
         Response response;
-        try{
+        try {
+            // Send to the server the recalculated signatures
             Request request = new Request.Builder()
                     .url(url1)
                     .put(body)
@@ -98,8 +94,7 @@ public class AsymmVerifProcess implements Runnable{
             code = response.code();
             Type verifiedType = new TypeToken<ArrayList<AsymmVerifiedMessage>>() {}.getType();
             verified = gson.fromJson(response.body().string(),verifiedType);
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             code = 100;
             throw new RuntimeException(e);
         }
@@ -110,10 +105,8 @@ public class AsymmVerifProcess implements Runnable{
     public ArrayList<AsymmVerifiedMessage> getVerified(){
         return verified;
     }
-
     private class AsymmVerifyArray{
         private ArrayList<AsymmServerCheck> update;
-
         public AsymmVerifyArray(ArrayList<AsymmServerCheck> verify) {
             this.update = verify;
         }

@@ -39,12 +39,10 @@ public class AsymmHandshakeHandler {
             throw new RuntimeException(e);
         }
 
+        // save the DRM ID value
         byte[] drmidvalue = wvDrm.getPropertyByteArray(MediaDrm.PROPERTY_DEVICE_UNIQUE_ID);
 
-        // p = drm id
-        // q = iccid if low android version, otherwise hash of drm id
         int reps = 2;
-//        BigInteger tmp_p = new BigInteger(wvDrm.getPropertyByteArray(MediaDrm.PROPERTY_DEVICE_UNIQUE_ID));
         BigInteger p;
         BigInteger q;
         String bighash_p = "";
@@ -58,10 +56,7 @@ public class AsymmHandshakeHandler {
             System.out.println(e);
         }
 
-        System.out.println("bighash(hex len " + bighash_p.length() +  ") is " + bighash_p);
         p = new BigInteger(ConversionUtil.hexStringToByteArray(bighash_p));
-//        tmp_q = new BigInteger(ConversionUtil.hexStringToByteArray(bighash_q));
-
 
         if (iccid != null) {
             System.out.println("Setting tmp_q to iccid value hashed");
@@ -72,7 +67,6 @@ public class AsymmHandshakeHandler {
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
-//            tmp_q = new BigInteger(iccid);
         } else {
             System.out.println("Cannot use iccid, using number only hashed drmid");
             try {
@@ -80,19 +74,13 @@ public class AsymmHandshakeHandler {
                 for(int i = 0; i < reps; i++) {
                     bighash_q += ConversionUtil.bytesToHex(sha512(drmhash_numberonly.getBytes()));
                 }
-//                tmp_q = new BigInteger(ConversionUtil.hexStringToByteArray(drmid_hash));
-//                System.out.println("DRM_ID: " + byteArrayToHexString(wvDrm.getPropertyByteArray(MediaDrm.PROPERTY_DEVICE_UNIQUE_ID)));
-//                System.out.println("DRM_ID Hash: " + drmid_hash);
-//                System.out.println("DRM_ID Hash w/o letters: " + drmid_hash.replaceAll("([a-z])", ""));
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
-
         }
-
-        System.out.println("bighash q: " + bighash_q);
         q = new BigInteger(ConversionUtil.hexStringToByteArray(bighash_q));
 
+        // Generate the actual p and q, plus N, e and phi, to calculate D
         q = q.abs();
         p = p.abs();
         q = q.nextProbablePrime();
@@ -101,24 +89,14 @@ public class AsymmHandshakeHandler {
         System.out.println("q prime is: " + q);
 
         BigInteger N = p.multiply(q);
-        System.out.println("N is " + N.bitLength() + " bit long");
         System.out.println("N is " + N);
-        System.out.println("N is " + ConversionUtil.bytesToHex(N.toByteArray()));
         BigInteger phi = (p.subtract(BigInteger.ONE)).multiply(q.subtract(BigInteger.ONE));
         BigInteger publicExponent = new BigInteger("65537");
-        System.out.println("Public exponent of value " + publicExponent + " is " + (
-                areCoprime(phi, publicExponent) ? "" : "NOT "
-                ) + "coprime of " + phi);
         BigInteger privateExponent = publicExponent.modInverse(phi);
 
         try {
+            // save the keys to the static variable and also to the SharedPreferences
             saveKeyPair(N, publicExponent, privateExponent);
-//            byte[] encodedPub = pub.getEncoded();
-//            System.out.println("Public Key: " + keyToString(encodedPub));
-
-            // This does not work, but public key is the same everytime, so this should be too
-//            byte[] encodedPriv = priv.getEncoded();
-//            System.out.println("Private Key: " + keyToString(encodedPriv));
             modulus = ConversionUtil.bytesToHex(N.toByteArray());
             pubExponent = ConversionUtil.bytesToHex(publicExponent.toByteArray());
             privExponent = ConversionUtil.bytesToHex(privateExponent.toByteArray());
@@ -127,9 +105,10 @@ public class AsymmHandshakeHandler {
         }
     }
 
+    // Sign the message using the SHA384withRSA algorithm, returning the hex string of the
+    // signature itself
     public static String signMessage(String plaintext) {
         try {
-            // sign
             String algo = "SHA384withRSA";
             Signature signature = Signature.getInstance(algo);
             signature.initSign((PrivateKey) keyPair.getPrivate());
@@ -141,6 +120,8 @@ public class AsymmHandshakeHandler {
         }
     }
 
+    // Generate the key pair starting from the RSA values (n, e, d) and save them in the static
+    // keyPair variable
     public static void saveKeyPair(BigInteger n, BigInteger pubexp, BigInteger privexp) throws NoSuchAlgorithmException, InvalidKeySpecException {
         RSAPublicKeySpec spec = new RSAPublicKeySpec(n, pubexp);
         RSAPrivateKeySpec privateSpec = new RSAPrivateKeySpec(n, privexp);
@@ -149,14 +130,6 @@ public class AsymmHandshakeHandler {
         PublicKey pub = factory.generatePublic(spec);
         PrivateKey priv = factory.generatePrivate(privateSpec);
         keyPair = new KeyPair(pub, priv);
-    }
-
-    public static boolean areCoprime(BigInteger m, BigInteger t) {
-        return m.gcd(t).equals(BigInteger.ONE);
-    }
-
-    public static String keyToString(byte[] key) {
-        return Base64.getEncoder().encodeToString(key);
     }
 
     public static byte[] sha512(byte[] input) throws NoSuchAlgorithmException {

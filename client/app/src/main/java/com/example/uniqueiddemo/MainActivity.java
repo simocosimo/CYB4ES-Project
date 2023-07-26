@@ -39,14 +39,11 @@ public class MainActivity extends AppCompatActivity {
     ActivityMainBinding binding;
     static String iccid = null;
     static KeyPair keyPair;
-
     static boolean needToHandshake = false;
     static String modulus, pubExponent, privExponent;
     static String sharedPrefName = "com.example.uniqueiddemo.asymm";
     static int serialNumber;
     static SharedPreferences sharedPref;
-
-//    private AsymmKeyGenProcess keygenThread;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,20 +56,23 @@ public class MainActivity extends AppCompatActivity {
         iccid = sharedPref.getString("iccid", null);
         System.out.println("SerialNumber: " + serialNumber);
 
+        // If no info is saved in the SharedPreferences, it is the first time the app is being run
+        // so aks for permissions
         if(mod == "null" && serialNumber == -1) {
-            // Verifica se il permesso READ_PHONE_STATE è stato concesso
             int permissionCheck = ContextCompat.checkSelfPermission(this, android.Manifest.permission.READ_PHONE_STATE);
             if (permissionCheck != PackageManager.PERMISSION_GRANTED && Build.VERSION.SDK_INT <= 30) {
-                // Se il permesso non è stato concesso, richiedilo all'utente
+                // If permissions are not granted, ask for them
                 ActivityCompat.requestPermissions(this,
                         new String[]{Manifest.permission.READ_PHONE_STATE},
                         PERMISSIONS_REQUEST_READ_PHONE_STATE);
             } else if (Build.VERSION.SDK_INT <= 30) {
+                // If permissions are granted, get the iccid value
                 TelecomManager tm2 = (TelecomManager) getSystemService(Context.TELECOM_SERVICE);
                 Iterator<PhoneAccountHandle> phoneAccounts = tm2.getCallCapablePhoneAccounts().listIterator();
                 PhoneAccountHandle phoneAccountHandle = phoneAccounts.next();
                 iccid = phoneAccountHandle.getId().substring(0, 19);
             } else if (Build.VERSION.SDK_INT > 30){
+                // If permissions for the iccid cannot be granted, generate the key without it
                 iccid = null;
                 if(serialNumber == -1) {
                     needToHandshake = true;
@@ -105,18 +105,15 @@ public class MainActivity extends AppCompatActivity {
             return false;
         });
 
+        // If info is saved in the SharedPreferences, restore them and use it for the rest of
+        // the execution. This prevents key re-generation each time the app is run.
         if(serialNumber != -1 || mod != "null") {
-            // I have data in sharedprefs, load them
             modulus = sharedPref.getString("modulus", "nope");
             pubExponent = sharedPref.getString("pubexponent", "nope");
             privExponent = sharedPref.getString("privexponent", "nope");
-            System.out.println("Saved modulus is: " + modulus);
-            System.out.println("Saved pubExponent is: " + pubExponent);
-            System.out.println("Saved privExponent is: " + privExponent);
             BigInteger m = new BigInteger(ConversionUtil.hexStringToByteArray(modulus));
             BigInteger pe = new BigInteger(ConversionUtil.hexStringToByteArray(pubExponent));
             BigInteger se = new BigInteger(ConversionUtil.hexStringToByteArray(privExponent));
-            System.out.println("modulus in big int is " + m);
             try {
                 AsymmHandshakeHandler.saveKeyPair(m, pe, se);
             } catch (Exception e) {
@@ -133,7 +130,8 @@ public class MainActivity extends AppCompatActivity {
             case PERMISSIONS_REQUEST_READ_PHONE_STATE: {
                 // If request is cancelled, the result arrays are empty.
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-
+                    // case PERMISSION_GRANTED
+                    // Retrieve iccid + generate the key using it as a parameter for the q RSA value
                     Toast.makeText(getApplicationContext(), "Permission granted", Toast.LENGTH_SHORT).show();
                     TelecomManager tm2 = (TelecomManager) getSystemService(Context.TELECOM_SERVICE);
                     @SuppressLint("MissingPermission")
@@ -151,6 +149,8 @@ public class MainActivity extends AppCompatActivity {
                     sharedEditor.putString("iccid", iccid);
                     sharedEditor.apply();
                 } else {
+                    // case PERMISSION_DENIED
+                    // The key is now generated without the iccid for the q RSA value
                     Toast.makeText(getApplicationContext(), "The ICCID will not be used to generate the key", Toast.LENGTH_SHORT).show();
                     iccid = null;
                     needToHandshake = true;
@@ -164,22 +164,10 @@ public class MainActivity extends AppCompatActivity {
                     sharedEditor.apply();
                 }
             }
-
-            // other 'case' lines to check for other
-            // permissions this app might request
         }
     }
 
-    private String publicKeyToPEM(PublicKey pubKey) {
-        String pk = Base64.getEncoder().encodeToString(pubKey.getEncoded());
-        String begin = "-----BEGIN PUBLIC KEY----- ";
-        String end = " -----END PUBLIC KEY-----";
-//        return (begin + pk.replaceAll("(.{64})", "$1\n") + end);
-        return (begin + pk + end);
-    }
-
     private void replaceFragment(Fragment fragment){
-
         FragmentManager fragmentManager = getSupportFragmentManager();
         FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
         fragmentTransaction.replace(R.id.frame_layout, fragment);

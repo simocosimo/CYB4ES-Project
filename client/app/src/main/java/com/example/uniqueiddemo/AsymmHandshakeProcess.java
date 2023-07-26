@@ -27,18 +27,14 @@ public class AsymmHandshakeProcess implements Runnable{
     private final Gson gson;
     private final OkHttpClient client;
     private HandshakeMessage addMessage;
-//    private Switch useIccid;
     private int code;
-
     private ResponseBody res_body;
 
     public AsymmHandshakeProcess(View authView){
         ip = authView.findViewById(R.id.insert_ip);
         msg = authView.findViewById(R.id.insert_message);
-//        secureRandom = new SecureRandom();
         gson = new Gson();
         client = new OkHttpClient();
-//        useIccid = authView.findViewById(R.id.use_iccid);
     }
 
     public void run() {
@@ -47,13 +43,14 @@ public class AsymmHandshakeProcess implements Runnable{
             code = 0;
             return;
         }
-        // change this to the right endpoint of asymm
+
         String url = "http://" + ip.getText().toString() + ":3001/api/asymm/handshake";
         MediaType JSON = MediaType.get("application/json; charset=utf-8");
 
         addMessage = new HandshakeMessage(modulus, pubExponent);
         String requestBody = gson.toJson(addMessage);
         try {
+            // send modulus and public exponent so that a new certificate can be generated
             RequestBody body = RequestBody.create(requestBody, JSON);
             Request request = new Request.Builder()
                     .url(url)

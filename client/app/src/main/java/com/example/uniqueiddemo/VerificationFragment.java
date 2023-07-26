@@ -63,7 +63,7 @@ public class VerificationFragment extends Fragment {
             @Override
             public void onClick(View view) {
                 if(!verSwitch.isChecked()) {
-                    // if switch is set to symm
+                    // if switch is set to symmetric cryptography
                     try {
                         symmVerifProcess = new SymmVerifProcess(verifView);
                         netThread = new Thread(symmVerifProcess);
@@ -87,7 +87,7 @@ public class VerificationFragment extends Fragment {
                     msgList.setAdapter(adapter);
                     msgList.setLayoutManager(new LinearLayoutManager(getContext()));
                 } else {
-                    // if switch is set to asymm
+                    // if switch is set to asymmetric cryptography
                     try {
                         asymmVerifProcess = new AsymmVerifProcess(verifView);
                         netThread = new Thread(asymmVerifProcess);
