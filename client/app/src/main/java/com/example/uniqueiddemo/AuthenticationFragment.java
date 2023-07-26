@@ -95,6 +95,9 @@ public class AuthenticationFragment extends Fragment {
         } else {
             useIccid.setChecked(false);
         }
+        if(iccid == null){
+            useIccid.setEnabled(false);
+        }
 
         enc.setOnCheckedChangeListener((radioGroup, i) -> {
             if (i == R.id.radio_symm) {

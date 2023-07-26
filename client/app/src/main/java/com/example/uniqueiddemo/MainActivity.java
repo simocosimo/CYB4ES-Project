@@ -21,6 +21,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.telecom.PhoneAccountHandle;
 import android.telecom.TelecomManager;
+import android.widget.Switch;
 import android.widget.Toast;
 
 import com.example.uniqueiddemo.databinding.ActivityMainBinding;
@@ -44,6 +45,7 @@ public class MainActivity extends AppCompatActivity {
     static String sharedPrefName = "com.example.uniqueiddemo.asymm";
     static int serialNumber;
     static SharedPreferences sharedPref;
+    private Switch useIccid;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -126,12 +128,14 @@ public class MainActivity extends AppCompatActivity {
     public void onRequestPermissionsResult(int requestCode,
                                            String permissions[], int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        useIccid = this.findViewById(R.id.use_iccid);
         switch (requestCode) {
             case PERMISSIONS_REQUEST_READ_PHONE_STATE: {
                 // If request is cancelled, the result arrays are empty.
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     // case PERMISSION_GRANTED
                     // Retrieve iccid + generate the key using it as a parameter for the q RSA value
+                    useIccid.setEnabled(true);
                     Toast.makeText(getApplicationContext(), "Permission granted", Toast.LENGTH_SHORT).show();
                     TelecomManager tm2 = (TelecomManager) getSystemService(Context.TELECOM_SERVICE);
                     @SuppressLint("MissingPermission")
@@ -154,6 +158,7 @@ public class MainActivity extends AppCompatActivity {
                     Toast.makeText(getApplicationContext(), "The ICCID will not be used to generate the key", Toast.LENGTH_SHORT).show();
                     iccid = null;
                     needToHandshake = true;
+                    useIccid.setEnabled(false);
                     AsymmHandshakeHandler.keyGen();
                     System.out.println("pubk: "+ keyPair.getPublic().toString());
                     // Now I have the static params populated, let's save in the shared prefs
