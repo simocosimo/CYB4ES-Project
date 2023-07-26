@@ -2,15 +2,18 @@ package com.example.uniqueiddemo;
 
 import static com.example.uniqueiddemo.MainActivity.iccid;
 import static com.example.uniqueiddemo.MainActivity.needToHandshake;
+import static com.example.uniqueiddemo.MainActivity.permissionCheck;
 import static com.example.uniqueiddemo.MainActivity.serialNumber;
 import static com.example.uniqueiddemo.MainActivity.sharedPrefName;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.media.UnsupportedSchemeException;
 import android.os.Build;
 import android.os.Bundle;
 
+import androidx.core.content.PermissionChecker;
 import androidx.fragment.app.Fragment;
 
 import android.media.MediaDrm;
@@ -95,7 +98,7 @@ public class AuthenticationFragment extends Fragment {
         } else {
             useIccid.setChecked(false);
         }
-        if(iccid == null){
+        if(permissionCheck != PackageManager.PERMISSION_GRANTED){
             useIccid.setEnabled(false);
         }
 

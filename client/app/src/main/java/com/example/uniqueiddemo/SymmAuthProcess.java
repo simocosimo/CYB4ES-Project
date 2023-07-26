@@ -1,7 +1,9 @@
 package com.example.uniqueiddemo;
 
 import static com.example.uniqueiddemo.MainActivity.iccid;
+import static com.example.uniqueiddemo.MainActivity.permissionCheck;
 
+import android.content.pm.PackageManager;
 import android.media.MediaDrm;
 import android.media.UnsupportedSchemeException;
 import android.os.Build;
@@ -79,7 +81,7 @@ public class SymmAuthProcess implements Runnable{
 
         drm = ConversionUtil.bytesToHex(wvDrm.getPropertyByteArray(MediaDrm.PROPERTY_DEVICE_UNIQUE_ID));
 
-        if(Build.VERSION.SDK_INT <= 30 && useIccid.isChecked() && iccid!=null){ //the iccid is concatenated only if it can be read and if the switch is selected
+        if(Build.VERSION.SDK_INT <= 30 && useIccid.isChecked() && permissionCheck == PackageManager.PERMISSION_GRANTED){ //the iccid is concatenated only if it can be read and if the switch is selected
             seed = drm.concat(iccid);
         } else{
             seed = drm;
@@ -101,7 +103,7 @@ public class SymmAuthProcess implements Runnable{
                  InvalidKeyException e) {
             throw new RuntimeException(e);
         }
-        addMessage = new AddMessage(kDigest, msg.getText().toString(), salt, drm, (useIccid.isChecked() && iccid != null ? iccid : null)); //the iccid is sent only id the switch is selected and if it can be read
+        addMessage = new AddMessage(kDigest, msg.getText().toString(), salt, drm, (useIccid.isChecked() ? iccid : null)); //the iccid is sent only id the switch is selected
         String requestBody = gson.toJson(addMessage);
         try {
             RequestBody body = RequestBody.create(requestBody, JSON);

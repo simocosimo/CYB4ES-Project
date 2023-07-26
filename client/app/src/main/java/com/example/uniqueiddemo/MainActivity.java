@@ -6,6 +6,7 @@ import static com.google.android.material.R.color.design_default_color_primary_v
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.content.PermissionChecker;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
@@ -46,6 +47,7 @@ public class MainActivity extends AppCompatActivity {
     static int serialNumber;
     static SharedPreferences sharedPref;
     private Switch useIccid;
+    static public int permissionCheck;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,8 +62,8 @@ public class MainActivity extends AppCompatActivity {
 
         // If no info is saved in the SharedPreferences, it is the first time the app is being run
         // so aks for permissions
+        permissionCheck = PermissionChecker.checkSelfPermission(this, android.Manifest.permission.READ_PHONE_STATE);
         if(mod == "null" && serialNumber == -1) {
-            int permissionCheck = ContextCompat.checkSelfPermission(this, android.Manifest.permission.READ_PHONE_STATE);
             if (permissionCheck != PackageManager.PERMISSION_GRANTED && Build.VERSION.SDK_INT <= 30) {
                 // If permissions are not granted, ask for them
                 ActivityCompat.requestPermissions(this,
