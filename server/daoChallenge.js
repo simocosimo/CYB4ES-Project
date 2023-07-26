@@ -5,6 +5,9 @@ const db = new sqlite3.Database('Collections.db', (err) => {
     if (err) throw err;
 });
 
+//Symmetric Encryption
+
+//extract the table of symmetric encryption
 exports.sendDB = () => {
     return new Promise((resolve,reject) => {
         const sql = 'SELECT * FROM Collection;';
@@ -21,10 +24,10 @@ exports.sendDB = () => {
 
 //update check verifying hmac.
 
-//update check in Collection
+//update check in Collection table (Symmetric encryption)
 exports.updateCheck = (elem) => {
     return new Promise((resolve, reject) => {
-        const firstFunction = () => {
+        const firstFunction = () => {//extract from the DB the items.
             const sql = 'SELECT IDmsg, HMACmsg FROM Collection WHERE IDmsg = ? AND HMACmsg = ?;';
             db.all(sql, [elem.id, elem.hmac], (err, rows) => {
                 if (err) {
@@ -36,7 +39,7 @@ exports.updateCheck = (elem) => {
             });
         };
 
-        const secondFunction = (my_info,elem) => {
+        const secondFunction = (my_info,elem) => {// update the checkstatus for IDmsg verified in check = ok
             if (my_info.length > 0) {
                 if (my_info[0].hmac === elem.hmac) {
                     const check = "ok";
@@ -54,7 +57,7 @@ exports.updateCheck = (elem) => {
             }
         };
 
-        const thirdFunction = (elem) => {
+        const thirdFunction = (elem) => {// select only the items with check = ok
             const check = "ok";
             const sql3 = 'SELECT IDmsg, message, hashMsg FROM Collection WHERE checkMsg = ? AND IDmsg= ?;';
             db.all(sql3, [check, elem.id], (err, rows) => {
@@ -89,7 +92,7 @@ exports.getMsg_and_salt = () => {
     });
 };
 
-// add new elem 
+// add new elem in the DB
 exports.addElements = (elem, digest) => {
     const check = "default";
     return new Promise((resolve, reject) => {
@@ -104,7 +107,7 @@ exports.addElements = (elem, digest) => {
     });
 };
 
-// delete row from DB
+// delete row from DB in Symmetric table
 exports.deleteFromDB = (userID) => {
     return new Promise((resolve, reject) => {
         const sql = 'DELETE FROM Collection WHERE IDmsg=?;';
@@ -142,7 +145,7 @@ exports.getIDCertFromKpub = (digest) => {
     });
 }
 
-//get max value & increase by 1
+//get max value from the DB & increase by 1
 exports.getIDCert = () => {
     return new Promise((resolve, reject) => {
         const sql = 'SELECT id_cert FROM certificates ORDER BY id_cert DESC;';
@@ -232,6 +235,7 @@ exports.getMsgW4V = () => {
 }
 
 // Update the check_msg given the corresponding id_msg already checked on the client side.
+// similar to the Symmetric phase
 exports.updateCheckAsymm = (elem) => {
     return new Promise((resolve, reject) => {
 		const firstFunction = () => {
