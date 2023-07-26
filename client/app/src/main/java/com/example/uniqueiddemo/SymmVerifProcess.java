@@ -71,26 +71,26 @@ public class SymmVerifProcess implements Runnable{
             Type messageListType = new TypeToken<ArrayList<VerifyMessage>>() {}.getType();
             messageList = gson.fromJson(response.body().string(),messageListType);
             wvDrm = new MediaDrm(WIDEVINE_UUID);
-            String drm = ConversionUtil.bytesToHex(wvDrm.getPropertyByteArray(MediaDrm.PROPERTY_DEVICE_UNIQUE_ID));
-            int nIteration = 1000;
+            String drm = ConversionUtil.bytesToHex(wvDrm.getPropertyByteArray(MediaDrm.PROPERTY_DEVICE_UNIQUE_ID)); //DRM Device Id saved as a string
+            int nIteration = 1000; //parameters for the KDF
             int keyLength = 256;
 
 
-            for (VerifyMessage message : messageList){
-                String id;
+            for (VerifyMessage message : messageList){ //for each message received, the key with the correspondent salt is created and HMAC is calculated
+                String seed;
                 if(Build.VERSION.SDK_INT <= 30 && message.getICCID() != null){
-                    id = drm.concat(iccid);
+                    seed = drm.concat(iccid);
                 }else {
-                    id = drm;
+                    seed = drm;
                 }
-                PBEKeySpec pbKeySpec = new PBEKeySpec(id.toCharArray(), ConversionUtil.hexStringToByteArray(message.getSalt()), nIteration, keyLength);
+                PBEKeySpec pbKeySpec = new PBEKeySpec(seed.toCharArray(), ConversionUtil.hexStringToByteArray(message.getSalt()), nIteration, keyLength); // the salt received is a string, so it has to be converted to byte array in order to be passed as input
                 SecretKeyFactory secretKeyFactory;
                 SecretKey keyBytes;
                 secretKeyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA384");
                 keyBytes = secretKeyFactory.generateSecret(pbKeySpec);
                 Mac hmac = Mac.getInstance("HmacSHA384");
                 hmac.init(keyBytes);
-                kDigest = ConversionUtil.bytesToHex(hmac.doFinal(ConversionUtil.hexStringToByteArray(message.getHashMsg())));
+                kDigest = ConversionUtil.bytesToHex(hmac.doFinal(ConversionUtil.hexStringToByteArray(message.getHashMsg()))); //same for the hash
                 verify.add(new ServerCheck(kDigest,message.getIDmsg()));
 
             }

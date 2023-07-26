@@ -44,6 +44,8 @@ public class SymmAuthProcess implements Runnable{
     private AddMessage addMessage;
     private Switch useIccid;
     private int code;
+    private String drm;
+    private String seed;
 
     public SymmAuthProcess(View authView){
         ip = authView.findViewById(R.id.insert_ip);
@@ -63,7 +65,7 @@ public class SymmAuthProcess implements Runnable{
         String url = "http://" + ip.getText().toString() + ":3001/api/add_elements";
         MediaType JSON = MediaType.get("application/json; charset=utf-8");
         byte[] saltBytes = new byte[8];
-        secureRandom.nextBytes(saltBytes);
+        secureRandom.nextBytes(saltBytes); //salt generation
         String salt = ConversionUtil.bytesToHex(saltBytes);
         String hashable = msg.getText().toString() + salt;
         int nIteration = 1000;
@@ -75,18 +77,20 @@ public class SymmAuthProcess implements Runnable{
             throw new RuntimeException(e);
         }
 
-        String id = ConversionUtil.bytesToHex(wvDrm.getPropertyByteArray(MediaDrm.PROPERTY_DEVICE_UNIQUE_ID));
-        String drm = id;
-        if(Build.VERSION.SDK_INT <= 30 && useIccid.isChecked() && iccid!=null){
-            id = drm.concat(iccid);
+        drm = ConversionUtil.bytesToHex(wvDrm.getPropertyByteArray(MediaDrm.PROPERTY_DEVICE_UNIQUE_ID));
+
+        if(Build.VERSION.SDK_INT <= 30 && useIccid.isChecked() && iccid!=null){ //the iccid is concatenated only if it can be read and if the switch is selected
+            seed = drm.concat(iccid);
+        } else{
+            seed = drm;
         }
-        PBEKeySpec pbKeySpec = new PBEKeySpec(id.toCharArray(), saltBytes, nIteration, keyLength);
+        PBEKeySpec pbKeySpec = new PBEKeySpec(seed.toCharArray(), saltBytes, nIteration, keyLength);
         SecretKeyFactory secretKeyFactory;
         SecretKey keyBytes;
         String kDigest;
         String digest;
         try {
-            secretKeyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA384");
+            secretKeyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA384"); //Key derivation and HMAC generation
             keyBytes = secretKeyFactory.generateSecret(pbKeySpec);
             Mac hmac = Mac.getInstance("HmacSHA384");
             MessageDigest md = MessageDigest.getInstance("SHA-384");
@@ -97,7 +101,7 @@ public class SymmAuthProcess implements Runnable{
                  InvalidKeyException e) {
             throw new RuntimeException(e);
         }
-        addMessage = new AddMessage(kDigest, msg.getText().toString(), salt, drm, (useIccid.isChecked() && iccid != null ? iccid : null));
+        addMessage = new AddMessage(kDigest, msg.getText().toString(), salt, drm, (useIccid.isChecked() && iccid != null ? iccid : null)); //the iccid is sent only id the switch is selected and if it can be read
         String requestBody = gson.toJson(addMessage);
         try {
             RequestBody body = RequestBody.create(requestBody, JSON);
