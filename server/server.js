@@ -24,13 +24,13 @@ app.use(session({
     secret: 'Scribing-Consult-Skid-Groove1-Mulberry', resave: false, saveUninitialized: false
 }));
 
-//mando il DB completo.
+//send Symmetric table.
 // GET /api/getDB
 app.get('/api/getDB', async (req, res) => {
     dao.sendDB().then(rowsDB => res.json(rowsDB)).catch(() => res.status(500).json({ error: `Database error while retrieving rowsDB` }).end())
 });
 
-//aggiorno il check
+//update check
 // PUT /api/updateCheck
 app.put('/api/updateCheck', async (req, res) => { 
     const vettore = req.body.verify; //req.body have the vector of items to verify.
@@ -38,7 +38,7 @@ app.put('/api/updateCheck', async (req, res) => {
         const promiseMsg = [];
         for (const elem of vettore) {
             promiseMsg.push(dao.updateCheck(elem));
-        }
+        }// use a Promise.all() to wait all the promise
         const results = await Promise.all(promiseMsg);
         const vett2 = results.filter((elem) => elem.id > 0);
         res.status(201).json(vett2).end();
@@ -61,10 +61,10 @@ app.post('/api/add_elements', async (req, res) => {
     let elem = req.body;
     let seed = elem.DRM;
     if (req.body.ICCID !== null){
-        seed = seed + elem.ICCID
+        seed = seed + elem.ICCID//update seed adding ICCID
     }
     const saltArray = Buffer.from(elem.salt, 'hex');
-    const key = crypto.pbkdf2Sync(seed, saltArray, 1000, 32, 'sha384');
+    const key = crypto.pbkdf2Sync(seed, saltArray, 1000, 32, 'sha384');//use KDF
     const hash = crypto.createHash("sha384");
     const hashable = elem.message + elem.salt;
     hash.update(hashable);
@@ -72,10 +72,10 @@ app.post('/api/add_elements', async (req, res) => {
     const hmac = crypto.createHmac('sha384', key);
     hmac.update(digest);
     const kDigest = hmac.digest('hex');
-    if (!crypto.timingSafeEqual(Buffer.from(kDigest), Buffer.from(elem.hmac))){
+    if (!crypto.timingSafeEqual(Buffer.from(kDigest), Buffer.from(elem.hmac))){// compare HMAC
         res.status(501).json({error: 'HMAC is not well formed'}).end();
     }
-    else 
+    else // add in the DB
       dao.addElements(elem,digest.toString('hex')).then(elem => res.json(elem)).catch(() => res.status(500).json({ error: `Database error while retrieving elems` }).end());
 });
 
@@ -100,21 +100,21 @@ app.post('/api/asymm/handshake', async(req,res) => {
    var n = req.body.n;
    var e = req.body.e;
    var keypub = forge.rsa.setPublicKey(n,e);
-   var pempubkey = forge.pki.publicKeyToPem(keypub);
+   var pempubkey = forge.pki.publicKeyToPem(keypub);// create K_pub 
 
     let serialNumber= -1;
     try{
-      serialNumber = await dao.getIDCertFromKpub(pempubkey);
+      serialNumber = await dao.getIDCertFromKpub(pempubkey);//search serialNumber in the DB
       if (serialNumber == 0){
         let newSerialNumber;
         try{
-          newSerialNumber = await dao.getIDCert();
+          newSerialNumber = await dao.getIDCert();  // get max value of serialNumber +1
           let cert = forge.pki.createCertificate();
           cert.publicKey = forge.pki.publicKeyFromPem(pempubkey); //public key device
           cert.serialNumber = newSerialNumber;
           cert.validity.notBefore = new Date();
           cert.validity.notAfter = new Date();
-          cert.validity.notAfter.setFullYear(cert.validity.notBefore.getFullYear() + 5);
+          cert.validity.notAfter.setFullYear(cert.validity.notBefore.getFullYear() + 5);//validity time
     
           let attrs = [{
             name: 'commonName',
@@ -177,7 +177,7 @@ app.post('/api/asymm/handshake', async(req,res) => {
             name: 'subjectKeyIdentifier'
           }]);
           
-          const privateKey = fs.readFileSync('private_key.pem', 'utf8');
+          const privateKey = fs.readFileSync('private_key.pem', 'utf8'); // extract server pub_key from file.pem
 
           // self-sign certificate
           cert.sign(forge.pki.privateKeyFromPem(privateKey)/*, forge.md.sha256.create()*/);
@@ -187,9 +187,9 @@ app.post('/api/asymm/handshake', async(req,res) => {
               
           //save serialNumber, cert, Kpub into the database
           try {
-            await dao.addCertificate(newSerialNumber,pempubkey,pem.certificate);
+            await dao.addCertificate(newSerialNumber,pempubkey,pem.certificate);//add item in the DB
             const ObjSerialNum = {serialNumber : newSerialNumber};
-            res.status(201).json(ObjSerialNum).end(); 
+            res.status(201).json(ObjSerialNum).end(); //return serialNumber
         } catch (err) {
             res.status(503).json({ error: `Database error during the insertion of the serialNumber, Kpub, certSigned into the DB` });
         }
@@ -200,7 +200,7 @@ app.post('/api/asymm/handshake', async(req,res) => {
       }
       else{
         const ObjSerialNum = {serialNumber : serialNumber};
-        res.status(201).json(ObjSerialNum).end();
+        res.status(201).json(ObjSerialNum).end();//return serialNumber
       }
     } catch (err) {
       res.status(503).json({ error: `Database error during the extraction of the serial number with k_pub: ${req.body.kpub}.` });
@@ -238,7 +238,7 @@ app.post('/api/asymm/add_elements', async (req, res) => {
 // GET /api/asymm/verify
 app.get('/api/asymm/verify', async (req, res) => {
   try {
-      let listMsg = await dao.getMsgW4V();
+      let listMsg = await dao.getMsgW4V();//get all the rows with check="w4v"
       res.status(201).json(listMsg).end();
   } catch (err) {
       res.status(503).json({ error: `Database error during the search of msg in w4v .` }).end();
