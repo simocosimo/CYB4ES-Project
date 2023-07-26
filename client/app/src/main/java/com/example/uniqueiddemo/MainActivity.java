@@ -60,10 +60,12 @@ public class MainActivity extends AppCompatActivity {
         iccid = sharedPref.getString("iccid", null);
         System.out.println("SerialNumber: " + serialNumber);
 
-        // If no info is saved in the SharedPreferences, it is the first time the app is being run
-        // so aks for permissions
-        permissionCheck = PermissionChecker.checkSelfPermission(this, android.Manifest.permission.READ_PHONE_STATE);
+        if(Build.VERSION.SDK_INT <= 30){
+            permissionCheck = PermissionChecker.checkSelfPermission(this, android.Manifest.permission.READ_PHONE_STATE);
+        }
         if(mod == "null" && serialNumber == -1) {
+            // If no info is saved in the SharedPreferences, it is the first time the app is being run
+            // so aks for permissions
             if (permissionCheck != PackageManager.PERMISSION_GRANTED && Build.VERSION.SDK_INT <= 30) {
                 // If permissions are not granted, ask for them
                 ActivityCompat.requestPermissions(this,
@@ -90,7 +92,7 @@ public class MainActivity extends AppCompatActivity {
                     sharedEditor.apply();
                 }
             }
-        }else if(permissionCheck == PackageManager.PERMISSION_GRANTED){
+        }else if(permissionCheck == PackageManager.PERMISSION_GRANTED && Build.VERSION.SDK_INT <= 30){
             TelecomManager tm2 = (TelecomManager) getSystemService(Context.TELECOM_SERVICE);
             Iterator<PhoneAccountHandle> phoneAccounts = tm2.getCallCapablePhoneAccounts().listIterator();
             PhoneAccountHandle phoneAccountHandle = phoneAccounts.next();

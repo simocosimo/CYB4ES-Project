@@ -95,12 +95,13 @@ public class AuthenticationFragment extends Fragment {
         useIccid = authView.findViewById(R.id.use_iccid);
         if (Build.VERSION.SDK_INT > 30){
             useIccid.setVisibility(View.INVISIBLE);
-        } else {
+            useIccid.setChecked(false);
+        } else if(permissionCheck != PackageManager.PERMISSION_GRANTED){
+            useIccid.setEnabled(false);
+        }else {
             useIccid.setChecked(false);
         }
-        if(permissionCheck != PackageManager.PERMISSION_GRANTED){
-            useIccid.setEnabled(false);
-        }
+
 
         enc.setOnCheckedChangeListener((radioGroup, i) -> {
             if (i == R.id.radio_symm) {
