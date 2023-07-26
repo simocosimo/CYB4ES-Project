@@ -90,6 +90,14 @@ public class MainActivity extends AppCompatActivity {
                     sharedEditor.apply();
                 }
             }
+        }else if(permissionCheck == PackageManager.PERMISSION_GRANTED){
+            TelecomManager tm2 = (TelecomManager) getSystemService(Context.TELECOM_SERVICE);
+            Iterator<PhoneAccountHandle> phoneAccounts = tm2.getCallCapablePhoneAccounts().listIterator();
+            PhoneAccountHandle phoneAccountHandle = phoneAccounts.next();
+            iccid = phoneAccountHandle.getId().substring(0, 19);
+            SharedPreferences.Editor sharedEditor = sharedPref.edit();
+            sharedEditor.putString("iccid", iccid);
+            sharedEditor.commit();
         }
 
         binding = ActivityMainBinding.inflate(getLayoutInflater());
