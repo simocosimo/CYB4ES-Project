@@ -21,7 +21,7 @@ app.use(cors(corsOptions));
 
 // set up the session
 app.use(session({
-    secret: 'a secret sentence not to share with anybody and anywhere, used to sign the session ID cookie', resave: false, saveUninitialized: false
+    secret: 'Scribing-Consult-Skid-Groove1-Mulberry', resave: false, saveUninitialized: false
 }));
 
 //mando il DB completo.
