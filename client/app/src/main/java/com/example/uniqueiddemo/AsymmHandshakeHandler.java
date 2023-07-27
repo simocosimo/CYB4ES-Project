@@ -3,9 +3,11 @@ package com.example.uniqueiddemo;
 import static com.example.uniqueiddemo.MainActivity.iccid;
 import static com.example.uniqueiddemo.MainActivity.keyPair;
 import static com.example.uniqueiddemo.MainActivity.modulus;
+import static com.example.uniqueiddemo.MainActivity.needToHandshake;
 import static com.example.uniqueiddemo.MainActivity.privExponent;
 import static com.example.uniqueiddemo.MainActivity.pubExponent;
 
+import android.content.SharedPreferences;
 import android.icu.text.SymbolTable;
 import android.media.MediaDrm;
 import android.media.UnsupportedSchemeException;
@@ -118,6 +120,21 @@ public class AsymmHandshakeHandler {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    // This function creates the key pair and save it to the shared preferences
+    // it sets the needs to handshake to true
+    public static void keyGenAndStore(SharedPreferences sharedPref, String iccid) {
+        needToHandshake = true;
+        keyGen();
+        System.out.println("pubk: "+ keyPair.getPublic().toString());
+        // Now I have the static params populated, let's save in the shared prefs
+        SharedPreferences.Editor sharedEditor = sharedPref.edit();
+        sharedEditor.putString("modulus", modulus);
+        sharedEditor.putString("pubexponent", pubExponent);
+        sharedEditor.putString("privexponent", privExponent);
+        if(iccid != null) sharedEditor.putString("iccid", iccid);
+        sharedEditor.apply();
     }
 
     // Generate the key pair starting from the RSA values (n, e, d) and save them in the static

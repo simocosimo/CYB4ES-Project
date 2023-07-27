@@ -48,22 +48,27 @@ public class MainActivity extends AppCompatActivity {
     static int serialNumber;
     static SharedPreferences sharedPref;
     private Switch useIccid;
-    static public int permissionCheck;
+    static public int permissionCheck = PermissionChecker.PERMISSION_DENIED;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         Context context = this;
+
+        // Accessing shared preferences and getting values useful for understanding if the app
+        // is being run for the first time or it has saved some values already (asymm keys and iccid)
         sharedPref = context.getSharedPreferences(sharedPrefName, Context.MODE_PRIVATE);
         serialNumber = sharedPref.getInt("serialNumber", -1);
         String mod = sharedPref.getString("modulus", "null");
         iccid = sharedPref.getString("iccid", null);
         System.out.println("SerialNumber: " + serialNumber);
 
+        // Checks permissions on Android 11 and lower
         if(Build.VERSION.SDK_INT <= 30){
             permissionCheck = PermissionChecker.checkSelfPermission(this, android.Manifest.permission.READ_PHONE_STATE);
         }
+
         if(mod == "null" && serialNumber == -1) {
             // If no info is saved in the SharedPreferences, it is the first time the app is being run
             // so aks for permissions
@@ -82,44 +87,22 @@ public class MainActivity extends AppCompatActivity {
                 // If permissions for the iccid cannot be granted, generate the key without it
                 iccid = null;
                 if(serialNumber == -1) {
-                    needToHandshake = true;
-                    AsymmHandshakeHandler.keyGen();
-                    System.out.println("pubk: "+ keyPair.getPublic().toString());
-                    // Now I have the static params populated, let's save in the shared prefs
-                    SharedPreferences.Editor sharedEditor = sharedPref.edit();
-                    sharedEditor.putString("modulus", modulus);
-                    sharedEditor.putString("pubexponent", pubExponent);
-                    sharedEditor.putString("privexponent", privExponent);
-                    sharedEditor.apply();
+                    AsymmHandshakeHandler.keyGenAndStore(sharedPref, null);
                 }
             }
-        }else if(permissionCheck == PermissionChecker.PERMISSION_GRANTED && Build.VERSION.SDK_INT <= 30){
+        } else if(permissionCheck == PermissionChecker.PERMISSION_GRANTED && Build.VERSION.SDK_INT <= 30) {
+            // NOTE: this "hack" to get the iccid cannot be put in a function, resulting in duplicated code
+            // this is because the getCallCapablePhoneAccounts() method needs to be enclosed
+            // in a permission check mechanism, and the check condition could be different (as in our
+            // case) so no way around it
             TelecomManager tm2 = (TelecomManager) getSystemService(Context.TELECOM_SERVICE);
             Iterator<PhoneAccountHandle> phoneAccounts = tm2.getCallCapablePhoneAccounts().listIterator();
             PhoneAccountHandle phoneAccountHandle = phoneAccounts.next();
             iccid = phoneAccountHandle.getId().substring(0, 19);
-            needToHandshake = true;
-            AsymmHandshakeHandler.keyGen();
-            System.out.println("pubk: "+ keyPair.getPublic().toString());
-            // Now I have the static params populated, let's save in the shared prefs
-            SharedPreferences.Editor sharedEditor = sharedPref.edit();
-            sharedEditor.putString("modulus", modulus);
-            sharedEditor.putString("pubexponent", pubExponent);
-            sharedEditor.putString("privexponent", privExponent);
-            sharedEditor.putString("iccid", iccid);
-            sharedEditor.apply();
-        } else if(permissionCheck != PermissionChecker.PERMISSION_GRANTED && Build.VERSION.SDK_INT <= 30){
+            AsymmHandshakeHandler.keyGenAndStore(sharedPref, iccid);
+        } else if(permissionCheck != PermissionChecker.PERMISSION_GRANTED && Build.VERSION.SDK_INT <= 30) {
             iccid = null;
-            needToHandshake = true;
-            useIccid.setEnabled(false);
-            AsymmHandshakeHandler.keyGen();
-            System.out.println("pubk: "+ keyPair.getPublic().toString());
-            // Now I have the static params populated, let's save in the shared prefs
-            SharedPreferences.Editor sharedEditor = sharedPref.edit();
-            sharedEditor.putString("modulus", modulus);
-            sharedEditor.putString("pubexponent", pubExponent);
-            sharedEditor.putString("privexponent", privExponent);
-            sharedEditor.apply();
+            AsymmHandshakeHandler.keyGenAndStore(sharedPref, null);
         }
 
         binding = ActivityMainBinding.inflate(getLayoutInflater());
@@ -175,31 +158,14 @@ public class MainActivity extends AppCompatActivity {
                     Iterator<PhoneAccountHandle> phoneAccounts = tm2.getCallCapablePhoneAccounts().listIterator();
                     PhoneAccountHandle phoneAccountHandle = phoneAccounts.next();
                     iccid = phoneAccountHandle.getId().substring(0,19);
-                    needToHandshake = true;
-                    AsymmHandshakeHandler.keyGen();
-                    System.out.println("pubk: "+ keyPair.getPublic().toString());
-                    // Now I have the static params populated, let's save in the shared prefs
-                    SharedPreferences.Editor sharedEditor = sharedPref.edit();
-                    sharedEditor.putString("modulus", modulus);
-                    sharedEditor.putString("pubexponent", pubExponent);
-                    sharedEditor.putString("privexponent", privExponent);
-                    sharedEditor.putString("iccid", iccid);
-                    sharedEditor.apply();
+                    AsymmHandshakeHandler.keyGenAndStore(sharedPref, iccid);
                 } else {
                     // case PERMISSION_DENIED
                     // The key is now generated without the iccid for the q RSA value
                     Toast.makeText(getApplicationContext(), "The ICCID will not be used to generate the key", Toast.LENGTH_SHORT).show();
                     iccid = null;
-                    needToHandshake = true;
                     useIccid.setEnabled(false);
-                    AsymmHandshakeHandler.keyGen();
-                    System.out.println("pubk: "+ keyPair.getPublic().toString());
-                    // Now I have the static params populated, let's save in the shared prefs
-                    SharedPreferences.Editor sharedEditor = sharedPref.edit();
-                    sharedEditor.putString("modulus", modulus);
-                    sharedEditor.putString("pubexponent", pubExponent);
-                    sharedEditor.putString("privexponent", privExponent);
-                    sharedEditor.apply();
+                    AsymmHandshakeHandler.keyGenAndStore(sharedPref, null);
                 }
             }
         }
