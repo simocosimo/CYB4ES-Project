@@ -149,7 +149,7 @@ public class AuthenticationFragment extends Fragment {
                         needToHandshake = false;
                     }
                 } else {
-                    Toast.makeText(authView.getContext(), type.getText() + " chosen", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(authView.getContext(), type.getText() + " chosen, using serial number " + serialNumber, Toast.LENGTH_SHORT).show();
                 }
             }
         });

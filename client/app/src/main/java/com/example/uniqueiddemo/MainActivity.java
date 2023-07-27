@@ -99,15 +99,20 @@ public class MainActivity extends AppCompatActivity {
             Iterator<PhoneAccountHandle> phoneAccounts = tm2.getCallCapablePhoneAccounts().listIterator();
             PhoneAccountHandle phoneAccountHandle = phoneAccounts.next();
             iccid = phoneAccountHandle.getId().substring(0, 19);
-            AsymmHandshakeHandler.keyGenAndStore(sharedPref, iccid);
+            if(serialNumber == -1) {
+                AsymmHandshakeHandler.keyGenAndStore(sharedPref, iccid);
+            }
         } else if(permissionCheck != PermissionChecker.PERMISSION_GRANTED && Build.VERSION.SDK_INT <= 30) {
             iccid = null;
-            AsymmHandshakeHandler.keyGenAndStore(sharedPref, null);
+            if(serialNumber == -1) {
+                AsymmHandshakeHandler.keyGenAndStore(sharedPref, null);
+            }
         }
 
         if(serialNumber == -1){
             needToHandshake =  true;
         }
+
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
         replaceFragment(new AuthenticationFragment());
