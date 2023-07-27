@@ -105,6 +105,9 @@ public class MainActivity extends AppCompatActivity {
             AsymmHandshakeHandler.keyGenAndStore(sharedPref, null);
         }
 
+        if(serialNumber == -1){
+            needToHandshake =  true;
+        }
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
         replaceFragment(new AuthenticationFragment());

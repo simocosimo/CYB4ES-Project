@@ -1,6 +1,7 @@
 package com.example.uniqueiddemo;
 
 import static com.example.uniqueiddemo.MainActivity.iccid;
+import static com.example.uniqueiddemo.MainActivity.permissionCheck;
 
 import android.media.MediaDrm;
 import android.os.Build;
@@ -9,6 +10,7 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import androidx.core.content.PermissionChecker;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.gson.Gson;
@@ -78,7 +80,7 @@ public class SymmVerifProcess implements Runnable{
 
             for (VerifyMessage message : messageList){ //for each message received, the key with the correspondent salt is created and HMAC is calculated
                 String seed;
-                if(Build.VERSION.SDK_INT <= 30 && message.getICCID() != null){
+                if(Build.VERSION.SDK_INT <= 30 && message.getICCID() != null && permissionCheck == PermissionChecker.PERMISSION_GRANTED){
                     seed = drm.concat(iccid);
                 }else {
                     seed = drm;
