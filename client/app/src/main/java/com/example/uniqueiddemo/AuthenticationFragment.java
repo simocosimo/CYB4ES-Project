@@ -107,7 +107,9 @@ public class AuthenticationFragment extends Fragment {
             if (i == R.id.radio_symm) {
                 // Symmetric encryption radio button is chosen
                 auth.setEnabled(true);
-                useIccid.setEnabled(true);
+                if(permissionCheck == PermissionChecker.PERMISSION_GRANTED){
+                    useIccid.setEnabled(true);
+                }
                 type = authView.findViewById(i);
                 Toast.makeText(authView.getContext(), type.getText() + " chosen", Toast.LENGTH_SHORT).show();
             } else if (i == R.id.radio_asymm) {
