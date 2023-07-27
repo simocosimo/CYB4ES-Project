@@ -96,7 +96,7 @@ public class AuthenticationFragment extends Fragment {
         if (Build.VERSION.SDK_INT > 30){
             useIccid.setVisibility(View.INVISIBLE);
             useIccid.setChecked(false);
-        } else if(permissionCheck != PackageManager.PERMISSION_GRANTED){
+        } else if(permissionCheck != PermissionChecker.PERMISSION_GRANTED){
             useIccid.setEnabled(false);
         }else {
             useIccid.setChecked(false);

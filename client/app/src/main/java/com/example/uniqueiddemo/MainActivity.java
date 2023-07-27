@@ -30,6 +30,7 @@ import com.example.uniqueiddemo.databinding.ActivityMainBinding;
 import java.io.StringWriter;
 import java.math.BigInteger;
 import java.security.KeyPair;
+import java.security.Permission;
 import java.security.PublicKey;
 import java.util.Base64;
 import java.util.Iterator;
@@ -66,7 +67,7 @@ public class MainActivity extends AppCompatActivity {
         if(mod == "null" && serialNumber == -1) {
             // If no info is saved in the SharedPreferences, it is the first time the app is being run
             // so aks for permissions
-            if (permissionCheck != PackageManager.PERMISSION_GRANTED && Build.VERSION.SDK_INT <= 30) {
+            if (permissionCheck != PermissionChecker.PERMISSION_GRANTED && Build.VERSION.SDK_INT <= 30) {
                 // If permissions are not granted, ask for them
                 ActivityCompat.requestPermissions(this,
                         new String[]{Manifest.permission.READ_PHONE_STATE},
@@ -92,14 +93,33 @@ public class MainActivity extends AppCompatActivity {
                     sharedEditor.apply();
                 }
             }
-        }else if(permissionCheck == PackageManager.PERMISSION_GRANTED && Build.VERSION.SDK_INT <= 30){
+        }else if(permissionCheck == PermissionChecker.PERMISSION_GRANTED && Build.VERSION.SDK_INT <= 30){
             TelecomManager tm2 = (TelecomManager) getSystemService(Context.TELECOM_SERVICE);
             Iterator<PhoneAccountHandle> phoneAccounts = tm2.getCallCapablePhoneAccounts().listIterator();
             PhoneAccountHandle phoneAccountHandle = phoneAccounts.next();
             iccid = phoneAccountHandle.getId().substring(0, 19);
+            needToHandshake = true;
+            AsymmHandshakeHandler.keyGen();
+            System.out.println("pubk: "+ keyPair.getPublic().toString());
+            // Now I have the static params populated, let's save in the shared prefs
             SharedPreferences.Editor sharedEditor = sharedPref.edit();
+            sharedEditor.putString("modulus", modulus);
+            sharedEditor.putString("pubexponent", pubExponent);
+            sharedEditor.putString("privexponent", privExponent);
             sharedEditor.putString("iccid", iccid);
-            sharedEditor.commit();
+            sharedEditor.apply();
+        } else if(permissionCheck != PermissionChecker.PERMISSION_GRANTED && Build.VERSION.SDK_INT <= 30){
+            iccid = null;
+            needToHandshake = true;
+            useIccid.setEnabled(false);
+            AsymmHandshakeHandler.keyGen();
+            System.out.println("pubk: "+ keyPair.getPublic().toString());
+            // Now I have the static params populated, let's save in the shared prefs
+            SharedPreferences.Editor sharedEditor = sharedPref.edit();
+            sharedEditor.putString("modulus", modulus);
+            sharedEditor.putString("pubexponent", pubExponent);
+            sharedEditor.putString("privexponent", privExponent);
+            sharedEditor.apply();
         }
 
         binding = ActivityMainBinding.inflate(getLayoutInflater());
@@ -148,6 +168,7 @@ public class MainActivity extends AppCompatActivity {
                     // case PERMISSION_GRANTED
                     // Retrieve iccid + generate the key using it as a parameter for the q RSA value
                     useIccid.setEnabled(true);
+                    permissionCheck = PackageManager.PERMISSION_GRANTED;
                     Toast.makeText(getApplicationContext(), "Permission granted", Toast.LENGTH_SHORT).show();
                     TelecomManager tm2 = (TelecomManager) getSystemService(Context.TELECOM_SERVICE);
                     @SuppressLint("MissingPermission")

@@ -11,6 +11,8 @@ import android.view.View;
 import android.widget.Switch;
 import android.widget.TextView;
 
+import androidx.core.content.PermissionChecker;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -81,7 +83,7 @@ public class SymmAuthProcess implements Runnable{
 
         drm = ConversionUtil.bytesToHex(wvDrm.getPropertyByteArray(MediaDrm.PROPERTY_DEVICE_UNIQUE_ID));
 
-        if(Build.VERSION.SDK_INT <= 30 && useIccid.isChecked() && permissionCheck == PackageManager.PERMISSION_GRANTED){ //the iccid is concatenated only if it can be read and if the switch is selected
+        if(Build.VERSION.SDK_INT <= 30 && useIccid.isChecked() && permissionCheck == PermissionChecker.PERMISSION_GRANTED){ //the iccid is concatenated only if it can be read and if the switch is selected
             seed = drm.concat(iccid);
         } else{
             seed = drm;
@@ -103,7 +105,7 @@ public class SymmAuthProcess implements Runnable{
                  InvalidKeyException e) {
             throw new RuntimeException(e);
         }
-        addMessage = new AddMessage(kDigest, msg.getText().toString(), salt, drm, (useIccid.isChecked() ? iccid : null)); //the iccid is sent only id the switch is selected
+        addMessage = new AddMessage(kDigest, msg.getText().toString(), salt, drm, useIccid.isChecked() ? iccid : null); //the iccid is sent only id the switch is selected
         String requestBody = gson.toJson(addMessage);
         try {
             RequestBody body = RequestBody.create(requestBody, JSON);
